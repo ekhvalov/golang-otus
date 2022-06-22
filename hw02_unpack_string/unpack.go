@@ -25,7 +25,7 @@ func Unpack(str string) (string, error) {
 		}
 		if isDigit(symbol) {
 			n := toDigit(symbol)
-			for j := 0; j < n; j++ { // TODO: Optimize?
+			for j := 0; j < n; j++ {
 				result.WriteRune(buffer)
 			}
 			buffer = 0
