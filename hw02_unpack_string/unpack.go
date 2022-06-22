@@ -34,12 +34,13 @@ func Unpack(str string) (string, error) {
 			buffer = symbol
 		}
 	}
-	if buffer != 0 {
-		if isDigit(buffer) {
-			return "", ErrInvalidString
-		}
-		result.WriteRune(buffer)
+	if buffer == 0 {
+		return result.String(), nil
 	}
+	if isDigit(buffer) {
+		return "", ErrInvalidString
+	}
+	result.WriteRune(buffer)
 	return result.String(), nil
 }
 
