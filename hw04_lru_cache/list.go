@@ -69,26 +69,24 @@ func (l *list) Remove(i *ListItem) {
 	if i.list != l {
 		return
 	}
+	l.length--
 	if i == l.frontItem {
 		if i == l.backItem {
 			l.frontItem = nil
 			l.backItem = nil
-		} else {
-			l.frontItem = i.Next
-			l.frontItem.Prev = i.Prev
+			return
 		}
-		l.length--
+		l.frontItem = i.Next
+		l.frontItem.Prev = i.Prev
 		return
 	}
 	if i == l.backItem {
 		l.backItem = i.Prev
 		l.backItem.Next = i.Next
-		l.length--
 		return
 	}
 	i.Prev.Next = i.Next
 	i.Next.Prev = i.Prev
-	l.length--
 }
 
 func (l *list) MoveToFront(i *ListItem) {
@@ -98,7 +96,7 @@ func (l *list) MoveToFront(i *ListItem) {
 	if i == l.backItem {
 		l.backItem = i.Prev
 		l.backItem.Next = nil
-	} else {
+	} else { // middle item
 		i.Prev.Next = i.Next
 		i.Next.Prev = i.Prev
 	}
