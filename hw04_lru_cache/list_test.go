@@ -213,8 +213,6 @@ func Test_list_Remove(t *testing.T) {
 		expectedLength         int
 		expectedValues         []interface{}
 		expectedValuesReversed []interface{}
-		expectedFrontValue     interface{}
-		expectedBackValue      interface{}
 	}{
 		{
 			name: "remove an item from an one item list",
@@ -230,8 +228,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         0,
 			expectedValues:         []interface{}{},
 			expectedValuesReversed: []interface{}{},
-			expectedFrontValue:     nil,
-			expectedBackValue:      nil,
 		},
 		{
 			name: "remove the first item from a two items list",
@@ -248,8 +244,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         1,
 			expectedValues:         []interface{}{20},
 			expectedValuesReversed: []interface{}{20},
-			expectedFrontValue:     20,
-			expectedBackValue:      20,
 		},
 		{
 			name: "remove the last item from a two items list",
@@ -266,8 +260,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         1,
 			expectedValues:         []interface{}{10},
 			expectedValuesReversed: []interface{}{10},
-			expectedFrontValue:     10,
-			expectedBackValue:      10,
 		},
 		{
 			name: "remove the first item from a three items list",
@@ -285,8 +277,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         2,
 			expectedValues:         []interface{}{20, 30},
 			expectedValuesReversed: []interface{}{30, 20},
-			expectedFrontValue:     20,
-			expectedBackValue:      30,
 		},
 		{
 			name: "remove the last item from three items list",
@@ -304,8 +294,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         2,
 			expectedValues:         []interface{}{10, 20},
 			expectedValuesReversed: []interface{}{20, 10},
-			expectedFrontValue:     10,
-			expectedBackValue:      20,
 		},
 		{
 			name: "remove the middle item from three items list",
@@ -323,8 +311,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         2,
 			expectedValues:         []interface{}{10, 30},
 			expectedValuesReversed: []interface{}{30, 10},
-			expectedFrontValue:     10,
-			expectedBackValue:      30,
 		},
 		{
 			name: "remove an item that is not in the list",
@@ -342,8 +328,6 @@ func Test_list_Remove(t *testing.T) {
 			expectedLength:         3,
 			expectedValues:         []interface{}{10, 20, 30},
 			expectedValuesReversed: []interface{}{30, 20, 10},
-			expectedFrontValue:     10,
-			expectedBackValue:      30,
 		},
 	}
 	for _, tt := range tests {
@@ -353,8 +337,6 @@ func Test_list_Remove(t *testing.T) {
 			tt.remove(&l, items)
 
 			require.Equal(t, tt.expectedLength, l.Len())
-			require.Equal(t, tt.expectedFrontValue, getItemValue(l.Front()))
-			require.Equal(t, tt.expectedBackValue, getItemValue(l.Back()))
 			require.Equal(t, tt.expectedValues, getListValues(&l))
 			require.Equal(t, tt.expectedValuesReversed, getListValuesReversed(&l))
 		})
@@ -369,8 +351,6 @@ func Test_list_MoveToFront(t *testing.T) {
 		expectedLength         int
 		expectedValues         []interface{}
 		expectedValuesReversed []interface{}
-		expectedFrontValue     interface{}
-		expectedBackValue      interface{}
 	}{
 		{
 			name: "move to front an item from an one item list",
@@ -384,8 +364,6 @@ func Test_list_MoveToFront(t *testing.T) {
 				(*l).MoveToFront(items[0])
 			},
 			expectedLength:         1,
-			expectedFrontValue:     10,
-			expectedBackValue:      10,
 			expectedValues:         []interface{}{10},
 			expectedValuesReversed: []interface{}{10},
 		},
@@ -402,8 +380,6 @@ func Test_list_MoveToFront(t *testing.T) {
 				(*l).MoveToFront(items[1])
 			},
 			expectedLength:         2,
-			expectedFrontValue:     10,
-			expectedBackValue:      20,
 			expectedValues:         []interface{}{10, 20},
 			expectedValuesReversed: []interface{}{20, 10},
 		},
@@ -421,8 +397,6 @@ func Test_list_MoveToFront(t *testing.T) {
 				(*l).MoveToFront(items[2])
 			},
 			expectedLength:         3,
-			expectedFrontValue:     10,
-			expectedBackValue:      30,
 			expectedValues:         []interface{}{10, 20, 30},
 			expectedValuesReversed: []interface{}{30, 20, 10},
 		},
@@ -440,8 +414,6 @@ func Test_list_MoveToFront(t *testing.T) {
 				(*l).MoveToFront(items[1])
 			},
 			expectedLength:         3,
-			expectedFrontValue:     10,
-			expectedBackValue:      30,
 			expectedValues:         []interface{}{10, 20, 30},
 			expectedValuesReversed: []interface{}{30, 20, 10},
 		},
@@ -459,8 +431,6 @@ func Test_list_MoveToFront(t *testing.T) {
 				(*l).MoveToFront(&ListItem{Value: 30})
 			},
 			expectedLength:         3,
-			expectedFrontValue:     10,
-			expectedBackValue:      30,
 			expectedValues:         []interface{}{10, 20, 30},
 			expectedValuesReversed: []interface{}{30, 20, 10},
 		},
@@ -472,8 +442,6 @@ func Test_list_MoveToFront(t *testing.T) {
 			tt.moveToFront(&l, items)
 
 			require.Equal(t, tt.expectedLength, l.Len())
-			require.Equal(t, tt.expectedFrontValue, getItemValue(l.Front()))
-			require.Equal(t, tt.expectedBackValue, getItemValue(l.Back()))
 			require.Equal(t, tt.expectedValues, getListValues(&l))
 			require.Equal(t, tt.expectedValuesReversed, getListValuesReversed(&l))
 		})
@@ -498,11 +466,4 @@ func getListValuesReversed(l *List) []interface{} {
 		item = item.Prev
 	}
 	return values
-}
-
-func getItemValue(i *ListItem) interface{} {
-	if i == nil {
-		return nil
-	}
-	return i.Value
 }
