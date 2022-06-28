@@ -65,10 +65,8 @@ func Test_list_PushFront(t *testing.T) {
 		expectedBackValue  interface{}
 	}{
 		{
-			name: "empty list",
-			createList: func() List {
-				return NewList()
-			},
+			name:               "empty list",
+			createList:         NewList,
 			args:               args{v: 10},
 			expectedValue:      10,
 			expectedLength:     1,
@@ -142,10 +140,8 @@ func Test_list_PushBack(t *testing.T) {
 		expectedBackValue  interface{}
 	}{
 		{
-			name: "empty list",
-			createList: func() List {
-				return NewList()
-			},
+			name:               "empty list",
+			createList:         NewList,
 			args:               args{v: 10},
 			expectedValue:      10,
 			expectedLength:     1,
