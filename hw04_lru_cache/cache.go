@@ -35,20 +35,17 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 	defer l.mutex.Unlock()
 	lItem, isExists := l.items[key]
 	cItem := cacheItem{key: key, value: value}
-	if !isExists {
-		lItem = l.queue.PushFront(cItem)
-	} else {
+	if isExists {
 		lItem.Value = cItem
 		l.queue.MoveToFront(lItem)
+		return true
 	}
-	if l.queue.Len() > l.capacity {
-		lastItem := l.queue.Back()
-		lastCacheItem := lastItem.Value.(cacheItem)
-		l.queue.Remove(lastItem)
-		delete(l.items, lastCacheItem.key)
+	if l.queue.Len() == l.capacity {
+		l.removeLastUsedItem()
 	}
+	lItem = l.queue.PushFront(cItem)
 	l.items[key] = lItem
-	return isExists
+	return false
 }
 
 func (l *lruCache) Get(key Key) (interface{}, bool) {
@@ -67,4 +64,11 @@ func (l *lruCache) Clear() {
 	defer l.mutex.Unlock()
 	l.queue = NewList()
 	l.items = make(map[Key]*ListItem, l.capacity)
+}
+
+func (l *lruCache) removeLastUsedItem() {
+	lastItem := l.queue.Back()
+	lastCacheItem := lastItem.Value.(cacheItem)
+	l.queue.Remove(lastItem)
+	delete(l.items, lastCacheItem.key)
 }
