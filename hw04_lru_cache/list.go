@@ -40,29 +40,29 @@ func (l list) Back() *ListItem {
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	item := ListItem{Value: v, Next: l.frontItem, list: l}
+	item := &ListItem{Value: v, Next: l.frontItem, list: l}
 	if l.frontItem != nil {
-		l.frontItem.Prev = &item
+		l.frontItem.Prev = item
 	}
-	l.frontItem = &item
+	l.frontItem = item
 	l.length++
 	if l.backItem == nil {
-		l.backItem = &item
+		l.backItem = item
 	}
-	return &item
+	return item
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
-	item := ListItem{Value: v, Prev: l.backItem, list: l}
+	item := &ListItem{Value: v, Prev: l.backItem, list: l}
 	if l.backItem != nil {
-		l.backItem.Next = &item
+		l.backItem.Next = item
 	}
-	l.backItem = &item
+	l.backItem = item
 	l.length++
 	if l.frontItem == nil {
-		l.frontItem = &item
+		l.frontItem = item
 	}
-	return &item
+	return item
 }
 
 func (l *list) Remove(i *ListItem) {
