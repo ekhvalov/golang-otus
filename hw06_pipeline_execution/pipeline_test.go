@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 )
 
 const (
@@ -14,6 +15,8 @@ const (
 )
 
 func TestPipeline(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
 	// Stage generator
 	g := func(_ string, f func(v interface{}) interface{}) Stage {
 		return func(in In) Out {

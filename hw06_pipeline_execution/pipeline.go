@@ -9,16 +9,24 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	out := in
+	for _, stage := range stages {
+		out = doneWrapper(done, stage(out))
+	}
+	return out
+}
+
+func doneWrapper(done, in In) Out {
 	out := make(Bi)
 	go func() {
-		defer close(out)
-		stageCh := in
-		for _, stage := range stages {
-			stageCh = stage(stageCh)
-		}
+		defer func() {
+			close(out)
+			for range in { // Draining of wrapped stage
+			}
+		}()
 		for {
 			select {
-			case v, ok := <-stageCh:
+			case v, ok := <-in:
 				if !ok {
 					return
 				}
