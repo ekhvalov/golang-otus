@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -25,37 +27,41 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		_ = src.Close()
 		_ = dst.Close()
 	}()
-	err = seek(src, offset)
+	size, err := seek(src, offset)
 	if err != nil {
 		return err
 	}
 	var bufSrc *bufio.Reader
 	if limit > 0 {
 		bufSrc = bufio.NewReader(io.LimitReader(src, limit))
+		size = limit
 	} else {
 		bufSrc = bufio.NewReader(src)
 	}
-
 	bufDst := bufio.NewWriter(dst)
-	_, err = io.Copy(bufDst, bufSrc)
+
+	bar := pb.Full.Start64(size)
+	barReader := bar.NewProxyReader(bufSrc)
+
+	_, err = io.Copy(bufDst, barReader)
 	return err
 }
 
-func seek(f *os.File, offset int64) error {
+func seek(f *os.File, offset int64) (int64, error) {
 	fileInfo, err := f.Stat()
 	if err != nil {
-		return err
+		return -1, err
 	}
 	if !fileInfo.Mode().IsRegular() {
-		return ErrUnsupportedFile
+		return -1, ErrUnsupportedFile
 	}
-	s := fileInfo.Size()
-	if offset > s {
-		return ErrOffsetExceedsFileSize
+	size := fileInfo.Size()
+	if offset > size {
+		return -1, ErrOffsetExceedsFileSize
 	}
 	_, err = f.Seek(offset, 0)
 	if err != nil {
-		return err
+		return -1, err
 	}
-	return nil
+	return size - offset, nil
 }
