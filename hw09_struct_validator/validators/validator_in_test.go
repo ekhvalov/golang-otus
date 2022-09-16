@@ -85,7 +85,6 @@ func Test_newValidatorIn(t *testing.T) {
 			v, createErr := newValidatorIn(tt.args.args, tt.args.value)
 			if tt.wantCreateErr != nil {
 				require.NotNil(t, createErr)
-				require.Equal(t, createErr, tt.wantCreateErr)
 				return
 			}
 			require.Nil(t, createErr)

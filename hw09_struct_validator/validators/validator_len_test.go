@@ -48,7 +48,6 @@ func Test_newValidatorLen(t *testing.T) {
 			v, createErr := newValidatorLen(tt.args.args, tt.args.value)
 			if tt.wantCreateErr != nil {
 				require.NotNil(t, createErr)
-				require.Equal(t, createErr, tt.wantCreateErr)
 				return
 			}
 			require.Nil(t, createErr)
