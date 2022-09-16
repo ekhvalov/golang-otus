@@ -38,7 +38,7 @@ func (f *ValidatorFactory) CreateValidator(args TagArguments, value interface{})
 		}
 		v, err := builder(na.args, value)
 		if err != nil {
-			return nil, fmt.Errorf("create validator '%s' error: %v", na.name, err)
+			return nil, fmt.Errorf("create validator '%s' error: %w", na.name, err)
 		}
 		validators = append(validators, v)
 	}

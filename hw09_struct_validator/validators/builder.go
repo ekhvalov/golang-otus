@@ -6,9 +6,11 @@ import (
 	"sync"
 )
 
-type parsedArgs interface{}
-type parseArgsFunc func(args string) (parsedArgs, error)
-type validateFunc func(pArgs parsedArgs, value reflect.Value) error
+type (
+	parsedArgs    interface{}
+	parseArgsFunc func(args string) (parsedArgs, error)
+	validateFunc  func(pArgs parsedArgs, value reflect.Value) error
+)
 
 type validatorBuilder struct {
 	parseArgsFunctions map[reflect.Kind]parseArgsFunc
@@ -23,7 +25,12 @@ func (b *validatorBuilder) init() {
 	})
 }
 
-func (b *validatorBuilder) setFunctionsForKind(parseArgsF parseArgsFunc, validateF validateFunc, kind reflect.Kind, kinds ...reflect.Kind) {
+func (b *validatorBuilder) setFunctionsForKind(
+	parseArgsF parseArgsFunc,
+	validateF validateFunc,
+	kind reflect.Kind,
+	kinds ...reflect.Kind,
+) {
 	b.init()
 	b.parseArgsFunctions[kind] = parseArgsF
 	b.validateFunctions[kind] = validateF
@@ -50,7 +57,7 @@ func (b *validatorBuilder) build(args string, value interface{}) (Validator, err
 	}
 	pArgs, err := parseArgs(args)
 	if err != nil {
-		return nil, fmt.Errorf("argument parse error: %v", err)
+		return nil, fmt.Errorf("argument parse error: %w", err)
 	}
 	return validator{
 		pArgs:    pArgs,

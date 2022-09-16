@@ -1,3 +1,4 @@
+//nolint:dupl
 package validators
 
 import (
@@ -37,7 +38,7 @@ func newValidatorMin(args string, value interface{}) (Validator, error) {
 	)
 	builder.setFunctionsForKind(
 		func(args string) (parsedArgs, error) {
-			return strconv.ParseFloat(args, 10)
+			return strconv.ParseFloat(args, 64)
 		},
 		func(pArgs parsedArgs, value reflect.Value) error {
 			threshold := pArgs.(float64)

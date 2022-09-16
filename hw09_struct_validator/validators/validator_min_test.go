@@ -2,10 +2,12 @@ package validators
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
+// nolint:funlen
 func TestValidatorMin(t *testing.T) {
 	type args struct {
 		args  string
