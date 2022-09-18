@@ -49,10 +49,11 @@ func getUsers(r io.Reader) (result users, err error) {
 func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
 
-	domainSuffix := "." + domain
+	dotDomain := "." + strings.ToLower(domain)
 	for _, user := range u {
-		if strings.HasSuffix(user.Email, domainSuffix) {
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]++
+		email := strings.ToLower(user.Email)
+		if strings.HasSuffix(email, dotDomain) {
+			result[strings.SplitN(email, "@", 2)[1]]++
 		}
 	}
 	return result, nil
