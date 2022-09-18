@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 )
 
 type Environment map[string]EnvValue
@@ -39,7 +40,7 @@ func ReadDir(dir string) (Environment, error) {
 			env[info.Name()] = EnvValue{NeedRemove: true}
 			continue
 		}
-		value, err := getValueFromFile(dir + "/" + info.Name())
+		value, err := getValueFromFile(filepath.Join(dir, info.Name()))
 		if err != nil {
 			return nil, err
 		}
