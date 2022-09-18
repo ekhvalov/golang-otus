@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bufio"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -50,21 +53,22 @@ func ReadDir(dir string) (Environment, error) {
 }
 
 func getValueFromFile(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
-	line := getFirstLine(data)
-	return string(sanitize(line)), nil
-}
-
-func getFirstLine(data []byte) []byte {
-	for i, d := range data {
-		if d == newLine {
-			return data[:i]
+	defer func() {
+		_ = file.Close()
+	}()
+	r := bufio.NewReader(file)
+	line, err := r.ReadBytes('\n')
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return string(sanitize(line)), nil
 		}
+		return "", err
 	}
-	return data
+	return string(sanitize(line[:len(line)-1])), nil
 }
 
 func sanitize(line []byte) []byte {
