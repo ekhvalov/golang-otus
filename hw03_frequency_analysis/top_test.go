@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -79,4 +79,48 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+}
+
+func TestTop10Additional(t *testing.T) {
+	testCases := []struct {
+		name  string
+		value string
+		want  []string
+	}{
+		{
+			name:  "Should return lexicographically sorted slice when all words have the exact count",
+			value: "j i h g f e d c b a",
+			want:  []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
+		},
+		{
+			name:  "Should return a smaller slice when the amount of top words is lower than ten",
+			value: "z b z a",
+			want:  []string{"z", "a", "b"},
+		},
+		{
+			name:  "Should skip a hyphen as a word",
+			value: "a-a - aa -- a-a b",
+			want:  []string{"a-a", "aa", "b"},
+		},
+		{
+			name:  "Should skip punctuation",
+			value: "b, , b, b - a; ,\n z. a! \"a\": b,. \n;'\" d",
+			want:  []string{"b", "a", "d", "z"},
+		},
+		{
+			name:  "Should ignore capital letters",
+			value: "Black Big Boots",
+			want:  []string{"big", "black", "boots"},
+		},
+		{
+			name:  "Should handle unicode",
+			value: "ま も み め む",
+			want:  []string{"ま", "み", "む", "め", "も"},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, Top10(tc.value))
+		})
+	}
 }
