@@ -27,7 +27,7 @@ func Run(tasks []Task, workersLimit, errorsLimit int) error {
 		wg.Add(1)
 		go handleTasks(tasksCh, errorsCh, &wg)
 	}
-	result := produce(&tasks, tasksCh, errorsCh, errorsLimit)
+	result := produce(tasks, tasksCh, errorsCh, errorsLimit)
 	close(tasksCh)
 	wg.Wait()
 	return result
@@ -43,9 +43,9 @@ func handleTasks(tasksCh <-chan Task, errorsCh chan<- error, wg *sync.WaitGroup)
 	wg.Done()
 }
 
-func produce(tasks *[]Task, tasksCh chan<- Task, errorsCh <-chan error, errorsLimit int) error {
+func produce(tasks []Task, tasksCh chan<- Task, errorsCh <-chan error, errorsLimit int) error {
 	errorsCount := 0
-	for _, task := range *tasks {
+	for _, task := range tasks {
 		isTaskSent := false
 		for !isTaskSent {
 			if errorsLimit > 0 && errorsCount == errorsLimit {
