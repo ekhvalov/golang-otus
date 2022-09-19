@@ -69,7 +69,6 @@ func produceTasks(doneCh <-chan struct{}, tasks []Task, tasksCh chan<- Task) err
 		case <-doneCh:
 			return ErrErrorsLimitExceeded
 		}
-
 	}
 	return nil
 }
