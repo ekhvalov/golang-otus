@@ -17,6 +17,9 @@ func Run(tasks []Task, workersLimit, errorsLimit int) error {
 	if workersLimit <= 0 {
 		return ErrInsufficientWorkers
 	}
+	if len(tasks) < workersLimit {
+		workersLimit = len(tasks)
+	}
 	wg := sync.WaitGroup{}
 	wg.Add(workersLimit)
 	tasksCh := make(chan Task)
