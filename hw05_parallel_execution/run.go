@@ -21,10 +21,10 @@ func Run(tasks []Task, workersLimit, errorsLimit int) error {
 		workersLimit = len(tasks)
 	}
 	wg := sync.WaitGroup{}
-	wg.Add(workersLimit)
 	tasksCh := make(chan Task)
 	errorsCh := make(chan error, workersLimit)
 	for i := 0; i < workersLimit; i++ {
+		wg.Add(1)
 		go handleTasks(tasksCh, errorsCh, &wg)
 	}
 	result := produce(&tasks, tasksCh, errorsCh, errorsLimit)
