@@ -40,6 +40,7 @@ func main() {
 	go handleSignal(&wg)
 
 	wg.Wait()
+	_ = tc.Close()
 }
 
 func getAddress() (string, error) {
@@ -60,7 +61,6 @@ func send(tc *TelnetClient, wg *sync.WaitGroup) {
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "bye-bye\n")
 	}
-	_ = (*tc).Close()
 	wg.Done()
 }
 
