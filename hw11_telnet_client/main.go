@@ -55,8 +55,7 @@ func getAddress() (string, error) {
 }
 
 func send(tc *TelnetClient, wg *sync.WaitGroup) {
-	err := (*tc).Send()
-	if err != nil {
+	if err := (*tc).Send(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "bye-bye\n")
@@ -66,8 +65,7 @@ func send(tc *TelnetClient, wg *sync.WaitGroup) {
 }
 
 func receive(tc *TelnetClient) {
-	err := (*tc).Receive()
-	if err != nil {
+	if err := (*tc).Receive(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "Connection closed by peer\n")
