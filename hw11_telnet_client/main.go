@@ -34,9 +34,9 @@ func main() {
 	_, _ = fmt.Fprintf(os.Stderr, "Connected to: %s\n", address)
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
+	wg.Add(2)
 	go send(&tc, &wg)
-	go receive(&tc)
+	go receive(&tc, &wg)
 	go handleSignal(&wg)
 
 	wg.Wait()
@@ -64,12 +64,13 @@ func send(tc *TelnetClient, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func receive(tc *TelnetClient) {
+func receive(tc *TelnetClient, wg *sync.WaitGroup) {
 	if err := (*tc).Receive(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "Connection closed by peer\n")
 	}
+	wg.Done()
 }
 
 func handleSignal(wg *sync.WaitGroup) {
