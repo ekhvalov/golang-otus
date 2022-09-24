@@ -7,13 +7,16 @@ import "github.com/spf13/viper"
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 
 type Config struct {
-	Logger LoggerConf
-	// TODO
+	Logger  LoggerConf
+	Storage StorageConf
 }
 
 type LoggerConf struct {
 	Level string
-	// TODO
+}
+
+type StorageConf struct {
+	Type string
 }
 
 func NewConfig(v *viper.Viper) Config {
@@ -22,15 +25,20 @@ func NewConfig(v *viper.Viper) Config {
 	}
 	return Config{
 		Logger: LoggerConf{
-			Level: v.GetString(loggerLevel),
+			Level: v.GetString(loggerLevelKey),
+		},
+		Storage: StorageConf{
+			Type: v.GetString(storageTypeKey),
 		},
 	}
 }
 
 const (
-	loggerLevel = "logger.level"
+	loggerLevelKey = "logger.level"
+	storageTypeKey = "storage.type"
 )
 
 var defaultValues = map[string]interface{}{
-	loggerLevel: "info",
+	loggerLevelKey: "info",
+	storageTypeKey: "memory",
 }

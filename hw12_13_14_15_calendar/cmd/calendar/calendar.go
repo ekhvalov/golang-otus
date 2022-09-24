@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -42,7 +43,10 @@ func run() {
 
 	logg := logger.New(cfg.Logger.Level, os.Stdout)
 
-	storage := memorystorage.New()
+	storage, err := createStorage(cfg.Storage)
+	if err != nil {
+		cobra.CheckErr(fmt.Errorf("create storage error: %w", err))
+	}
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)
@@ -90,4 +94,13 @@ func getViper() (*viper.Viper, error) {
 		fmt.Println("Using config file:", cfgFile)
 	}
 	return v, nil
+}
+
+func createStorage(cfg StorageConf) (app.Storage, error) {
+	switch strings.ToLower(cfg.Type) {
+	case "memory":
+		return memorystorage.New(), nil
+	default:
+		return nil, fmt.Errorf("undefined storage type: %s", cfg.Type)
+	}
 }
