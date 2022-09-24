@@ -49,7 +49,7 @@ func run() {
 	}
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(cfg.HTTP.Address, cfg.HTTP.Port, logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -77,8 +77,9 @@ func run() {
 
 func getViper() (*viper.Viper, error) {
 	v := viper.New()
-	v.AutomaticEnv()
 	v.SetEnvPrefix(configEnvPrefix)
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
 
 	if cfgFile == "" {
 		err := v.ReadConfig(bytes.NewBuffer([]byte("")))

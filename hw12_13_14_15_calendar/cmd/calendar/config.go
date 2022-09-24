@@ -9,6 +9,7 @@ import "github.com/spf13/viper"
 type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
+	HTTP    HTTPConf
 }
 
 type LoggerConf struct {
@@ -17,6 +18,11 @@ type LoggerConf struct {
 
 type StorageConf struct {
 	Type string
+}
+
+type HTTPConf struct {
+	Address string
+	Port    uint
 }
 
 func NewConfig(v *viper.Viper) Config {
@@ -30,10 +36,16 @@ func NewConfig(v *viper.Viper) Config {
 		Storage: StorageConf{
 			Type: v.GetString(storageTypeKey),
 		},
+		HTTP: HTTPConf{
+			Address: v.GetString(httpAddressKey),
+			Port:    v.GetUint(httpPortKey),
+		},
 	}
 }
 
 const (
+	httpAddressKey = "http.address"
+	httpPortKey    = "http.port"
 	loggerLevelKey = "logger.level"
 	storageTypeKey = "storage.type"
 )
