@@ -40,7 +40,7 @@ func run() {
 	}
 	cfg := NewConfig(v)
 
-	logg := logger.New(cfg.Logger.Level)
+	logg := logger.New(cfg.Logger.Level, os.Stdout)
 
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
