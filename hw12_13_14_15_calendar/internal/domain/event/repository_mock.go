@@ -35,6 +35,8 @@ func (r BrokenRepository) GetMonthEvents(_ context.Context, _ time.Time) ([]Even
 type PlainRepository struct {
 	Event   Event
 	EventID string
+	Date    time.Time
+	Events  []Event
 }
 
 func (r *PlainRepository) Create(_ context.Context, event Event) error {
@@ -53,8 +55,9 @@ func (r *PlainRepository) Delete(_ context.Context, eventID string) error {
 	return nil
 }
 
-func (r *PlainRepository) GetDayEvents(_ context.Context, _ time.Time) ([]Event, error) {
-	return nil, nil
+func (r *PlainRepository) GetDayEvents(_ context.Context, date time.Time) ([]Event, error) {
+	r.Date = date
+	return r.Events, nil
 }
 
 func (r *PlainRepository) GetWeekEvents(_ context.Context, _ time.Time) ([]Event, error) {
