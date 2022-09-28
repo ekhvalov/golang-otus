@@ -34,7 +34,10 @@ type createEventRequestHandler struct {
 	repository event.Repository
 }
 
-func (h createEventRequestHandler) Handle(ctx context.Context, request CreateEventRequest) (*CreateEventResponse, error) {
+func (h createEventRequestHandler) Handle(
+	ctx context.Context,
+	request CreateEventRequest,
+) (*CreateEventResponse, error) {
 	if err := validateTitle(request.Title); err != nil {
 		return nil, err
 	}
