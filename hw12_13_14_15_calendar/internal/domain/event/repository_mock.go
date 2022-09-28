@@ -16,7 +16,7 @@ func (r BrokenRepository) Update(_ context.Context, _ string, _ Event) error {
 	return fmt.Errorf("update error")
 }
 
-func (r BrokenRepository) Delete(_ context.Context, _ Event) error {
+func (r BrokenRepository) Delete(_ context.Context, _ string) error {
 	return fmt.Errorf("delete error")
 }
 
@@ -48,8 +48,8 @@ func (r *PlainRepository) Update(_ context.Context, eventID string, event Event)
 	return nil
 }
 
-func (r *PlainRepository) Delete(_ context.Context, event Event) error {
-	r.Event = event
+func (r *PlainRepository) Delete(_ context.Context, eventID string) error {
+	r.EventID = eventID
 	return nil
 }
 
