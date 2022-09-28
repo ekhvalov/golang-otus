@@ -65,6 +65,7 @@ func (r *PlainRepository) GetWeekEvents(_ context.Context, date time.Time) ([]Ev
 	return r.Events, nil
 }
 
-func (r *PlainRepository) GetMonthEvents(_ context.Context, _ time.Time) ([]Event, error) {
-	return nil, nil
+func (r *PlainRepository) GetMonthEvents(_ context.Context, date time.Time) ([]Event, error) {
+	r.Date = date
+	return r.Events, nil
 }
