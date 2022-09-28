@@ -12,7 +12,7 @@ func (r BrokenRepository) Create(_ context.Context, _ Event) error {
 	return fmt.Errorf("create error")
 }
 
-func (r BrokenRepository) Update(_ context.Context, _ Event) error {
+func (r BrokenRepository) Update(_ context.Context, _ string, _ Event) error {
 	return fmt.Errorf("update error")
 }
 
@@ -33,7 +33,8 @@ func (r BrokenRepository) GetMonthEvents(_ context.Context, _ time.Time) ([]Even
 }
 
 type PlainRepository struct {
-	Event Event
+	Event   Event
+	EventID string
 }
 
 func (r *PlainRepository) Create(_ context.Context, event Event) error {
@@ -41,8 +42,9 @@ func (r *PlainRepository) Create(_ context.Context, event Event) error {
 	return nil
 }
 
-func (r *PlainRepository) Update(_ context.Context, event Event) error {
+func (r *PlainRepository) Update(_ context.Context, eventID string, event Event) error {
 	r.Event = event
+	r.EventID = eventID
 	return nil
 }
 

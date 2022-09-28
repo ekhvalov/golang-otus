@@ -34,3 +34,10 @@ func validateUserID(userID string) error {
 	}
 	return nil
 }
+
+func validateID(id string) error {
+	if id == "" {
+		return fmt.Errorf("ID is empty")
+	}
+	return nil
+}
