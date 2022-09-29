@@ -2,11 +2,14 @@ package command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 )
+
+var ErrDateBusy = errors.New("requested date is busy")
 
 type CreateEventRequest struct {
 	Title        string
@@ -23,10 +26,6 @@ type CreateEventResponse struct {
 
 type CreateEventRequestHandler interface {
 	Handle(ctx context.Context, request CreateEventRequest) (*CreateEventResponse, error)
-}
-
-type IDProvider interface {
-	GetID() (string, error)
 }
 
 type createEventRequestHandler struct {
@@ -49,6 +48,13 @@ func (h createEventRequestHandler) Handle(
 	}
 	if err := validateUserID(request.UserID); err != nil {
 		return nil, err
+	}
+	isAvailable, err := h.repository.IsDateAvailable(ctx, request.DateTime, request.Duration)
+	if err != nil {
+		return nil, err
+	}
+	if !isAvailable {
+		return nil, ErrDateBusy
 	}
 	ID, err := h.idProvider.GetID()
 	if err != nil {

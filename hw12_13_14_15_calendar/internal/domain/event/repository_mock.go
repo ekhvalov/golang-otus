@@ -32,11 +32,17 @@ func (r BrokenRepository) GetMonthEvents(_ context.Context, _ time.Time) ([]Even
 	return nil, fmt.Errorf("get month event error")
 }
 
+func (r BrokenRepository) IsDateAvailable(_ context.Context, _ time.Time, _ time.Duration) (bool, error) {
+	return false, fmt.Errorf("is timeslot available error")
+}
+
 type PlainRepository struct {
-	Event   Event
-	EventID string
-	Date    time.Time
-	Events  []Event
+	Event       Event
+	EventID     string
+	Date        time.Time
+	Duration    time.Duration
+	Events      []Event
+	IsAvailable bool
 }
 
 func (r *PlainRepository) Create(_ context.Context, event Event) error {
@@ -68,4 +74,10 @@ func (r *PlainRepository) GetWeekEvents(_ context.Context, date time.Time) ([]Ev
 func (r *PlainRepository) GetMonthEvents(_ context.Context, date time.Time) ([]Event, error) {
 	r.Date = date
 	return r.Events, nil
+}
+
+func (r *PlainRepository) IsDateAvailable(_ context.Context, date time.Time, duration time.Duration) (bool, error) {
+	r.Date = date
+	r.Duration = duration
+	return r.IsAvailable, nil
 }

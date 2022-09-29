@@ -3,6 +3,7 @@ module github.com/ekhvalov/hw12_13_14_15_calendar
 go 1.16
 
 require (
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/rs/zerolog v1.28.0 // indirect
 	github.com/spf13/cobra v1.5.0

@@ -31,4 +31,8 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img version test lint
+gen:
+	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command
+	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event
+
+.PHONY: build run build-img run-img version test lint gen
