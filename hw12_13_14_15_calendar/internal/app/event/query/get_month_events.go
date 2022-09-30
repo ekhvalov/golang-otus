@@ -20,24 +20,24 @@ type GetMonthEventsRequestHandler interface {
 	Handle(ctx context.Context, request GetMonthEventsRequest) (*GetMonthEventsResponse, error)
 }
 
-func NewGetMonthEventsRequestHandler(repository event.Repository) (GetMonthEventsRequestHandler, error) {
-	if repository == nil {
-		return nil, fmt.Errorf("provided repository is nil")
+func NewGetMonthEventsRequestHandler(storage event.Storage) (GetMonthEventsRequestHandler, error) {
+	if storage == nil {
+		return nil, fmt.Errorf("provided storage is nil")
 	}
-	return getMonthEventsRequestHandler{repository: repository}, nil
+	return getMonthEventsRequestHandler{storage: storage}, nil
 }
 
 type getMonthEventsRequestHandler struct {
-	repository event.Repository
+	storage event.Storage
 }
 
 func (h getMonthEventsRequestHandler) Handle(
 	ctx context.Context,
 	request GetMonthEventsRequest,
 ) (*GetMonthEventsResponse, error) {
-	events, err := h.repository.GetMonthEvents(ctx, request.Date)
+	events, err := h.storage.GetMonthEvents(ctx, request.Date)
 	if err != nil {
-		return nil, fmt.Errorf("repository GetMonthEvents error: %w", err)
+		return nil, fmt.Errorf("storage GetMonthEvents error: %w", err)
 	}
 	return &GetMonthEventsResponse{Events: events}, nil
 }

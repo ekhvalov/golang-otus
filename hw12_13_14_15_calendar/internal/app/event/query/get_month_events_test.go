@@ -38,15 +38,15 @@ func Test_getMonthEventsRequestHandler_Handle(t *testing.T) {
 	errGetEvents := errors.New("get events error")
 
 	tests := map[string]struct {
-		getRepository func(controller *gomock.Controller) event.Repository
-		request       query.GetMonthEventsRequest
-		want          *query.GetMonthEventsResponse
-		wantErr       bool
-		wantErrType   error
+		getStorage  func(controller *gomock.Controller) event.Storage
+		request     query.GetMonthEventsRequest
+		want        *query.GetMonthEventsResponse
+		wantErr     bool
+		wantErrType error
 	}{
-		"should return error when repository returned error": {
-			getRepository: func(controller *gomock.Controller) event.Repository {
-				r := mock.NewMockRepository(controller)
+		"should return error when storage returned error": {
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				r := mock.NewMockStorage(controller)
 				r.EXPECT().
 					GetMonthEvents(context.Background(), date).
 					Return(nil, errGetEvents)
@@ -56,9 +56,9 @@ func Test_getMonthEventsRequestHandler_Handle(t *testing.T) {
 			wantErr:     true,
 			wantErrType: errGetEvents,
 		},
-		"should return events when no error returned by repository": {
-			getRepository: func(controller *gomock.Controller) event.Repository {
-				r := mock.NewMockRepository(controller)
+		"should return events when no error returned by storage": {
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				r := mock.NewMockStorage(controller)
 				r.EXPECT().
 					GetMonthEvents(context.Background(), date).
 					Return(events, nil)
@@ -74,7 +74,7 @@ func Test_getMonthEventsRequestHandler_Handle(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
-			h, err := query.NewGetMonthEventsRequestHandler(tt.getRepository(controller))
+			h, err := query.NewGetMonthEventsRequestHandler(tt.getStorage(controller))
 			require.NoError(t, err)
 
 			got, err := h.Handle(context.Background(), tt.request)

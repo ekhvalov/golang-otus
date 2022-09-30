@@ -20,24 +20,24 @@ type GetDayEventsRequestHandler interface {
 	Handle(ctx context.Context, request GetDayEventsRequest) (*GetDayEventsResponse, error)
 }
 
-func NewGetDayEventsRequestHandler(repository event.Repository) (GetDayEventsRequestHandler, error) {
-	if repository == nil {
-		return nil, fmt.Errorf("provided repository is nil")
+func NewGetDayEventsRequestHandler(storage event.Storage) (GetDayEventsRequestHandler, error) {
+	if storage == nil {
+		return nil, fmt.Errorf("provided storage is nil")
 	}
-	return getDayEventsRequestHandler{repository: repository}, nil
+	return getDayEventsRequestHandler{storage: storage}, nil
 }
 
 type getDayEventsRequestHandler struct {
-	repository event.Repository
+	storage event.Storage
 }
 
 func (h getDayEventsRequestHandler) Handle(
 	ctx context.Context,
 	request GetDayEventsRequest,
 ) (*GetDayEventsResponse, error) {
-	events, err := h.repository.GetDayEvents(ctx, request.Date)
+	events, err := h.storage.GetDayEvents(ctx, request.Date)
 	if err != nil {
-		return nil, fmt.Errorf("repository GetDayEvents error: %w", err)
+		return nil, fmt.Errorf("storage GetDayEvents error: %w", err)
 	}
 	return &GetDayEventsResponse{Events: events}, nil
 }

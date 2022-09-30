@@ -1,13 +1,13 @@
 package event
 
-//go:generate mockgen -destination=./mock/repository_gen.go -package mock . Repository
+//go:generate mockgen -destination=./mock/storage_gen.go -package mock . Storage
 
 import (
 	"context"
 	"time"
 )
 
-type Repository interface {
+type Storage interface {
 	Create(ctx context.Context, event Event) error
 	Update(ctx context.Context, eventID string, event Event) error
 	Delete(ctx context.Context, eventID string) error

@@ -8,7 +8,7 @@ import (
 
 	providermock "github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command/mock"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
-	repositorymock "github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event/mock"
+	storagemock "github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -77,7 +77,7 @@ func Test_When_ValidationErrorOccurred_Then_HandlerShouldReturnError(t *testing.
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			c := createEventRequestHandler{idProvider: nil, repository: nil}
+			c := createEventRequestHandler{idProvider: nil, storage: nil}
 			got, err := c.Handle(context.Background(), tt.request)
 			require.Error(t, err)
 			require.Nil(t, got)
@@ -85,36 +85,36 @@ func Test_When_ValidationErrorOccurred_Then_HandlerShouldReturnError(t *testing.
 	}
 }
 
-func Test_When_RepositoryIsAvailableReturnedError_Then_HandlerShouldReturnError(t *testing.T) {
+func Test_When_StorageIsAvailableReturnedError_Then_HandlerShouldReturnError(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	errRepository := errors.New("repository error")
-	repository := repositorymock.NewMockRepository(controller)
-	repository.EXPECT().
+	errStorage := errors.New("storage error")
+	storage := storagemock.NewMockStorage(controller)
+	storage.EXPECT().
 		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(false, errRepository)
+		Return(false, errStorage)
 	h := createEventRequestHandler{
 		idProvider: nil,
-		repository: repository,
+		storage:    storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)
 
 	require.Error(t, err)
-	require.ErrorIs(t, err, errRepository)
+	require.ErrorIs(t, err, errStorage)
 	require.Nil(t, response)
 }
 
 func Test_When_RequestedDateIsBusy_Then_HandlerShouldReturnErrDateBusy(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	repository := repositorymock.NewMockRepository(controller)
-	repository.EXPECT().
+	Storage := storagemock.NewMockStorage(controller)
+	Storage.EXPECT().
 		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 		Return(false, nil)
 	h := createEventRequestHandler{
 		idProvider: nil,
-		repository: repository,
+		storage:    Storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)
@@ -130,13 +130,13 @@ func Test_When_IDProviderReturnedError_Then_HandlerShouldReturnError(t *testing.
 	errProvider := errors.New("provider error")
 	provider := providermock.NewMockIDProvider(controller)
 	provider.EXPECT().GetID().Return("", errProvider)
-	repository := repositorymock.NewMockRepository(controller)
-	repository.EXPECT().
+	Storage := storagemock.NewMockStorage(controller)
+	Storage.EXPECT().
 		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 		Return(true, nil)
 	h := createEventRequestHandler{
 		idProvider: provider,
-		repository: repository,
+		storage:    Storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)
@@ -145,20 +145,20 @@ func Test_When_IDProviderReturnedError_Then_HandlerShouldReturnError(t *testing.
 	require.Nil(t, response)
 }
 
-func Test_When_RepositoryCreateErrorOccurred_Then_HandlerShouldReturnError(t *testing.T) {
+func Test_When_StorageCreateErrorOccurred_Then_HandlerShouldReturnError(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	repository := repositorymock.NewMockRepository(controller)
-	repository.EXPECT().
+	Storage := storagemock.NewMockStorage(controller)
+	Storage.EXPECT().
 		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 		Return(true, nil)
 	errCreateEvent := errors.New("create event error")
-	repository.EXPECT().
+	Storage.EXPECT().
 		Create(gomock.Any(), gomock.Any()).
 		Return(errCreateEvent)
 	h := createEventRequestHandler{
 		idProvider: getPlainIDProvider(controller),
-		repository: repository,
+		storage:    Storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)
@@ -170,16 +170,16 @@ func Test_When_RepositoryCreateErrorOccurred_Then_HandlerShouldReturnError(t *te
 func Test_When_NoErrorsOccurred_Then_HandlerShouldReturnCreateEventResponse(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	repository := repositorymock.NewMockRepository(controller)
-	repository.EXPECT().
+	Storage := storagemock.NewMockStorage(controller)
+	Storage.EXPECT().
 		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 		Return(true, nil)
-	repository.EXPECT().
+	Storage.EXPECT().
 		Create(gomock.Any(), gomock.Any()).
 		Return(nil)
 	h := createEventRequestHandler{
 		idProvider: getPlainIDProvider(controller),
-		repository: repository,
+		storage:    Storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)

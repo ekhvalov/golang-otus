@@ -13,23 +13,23 @@ import (
 )
 
 func Test_deleteEventRequestHandler_Handle_Error(t *testing.T) {
-	getMockRepository := func(controller *gomock.Controller) event.Repository {
-		return mock.NewMockRepository(controller)
+	getMockStorage := func(controller *gomock.Controller) event.Storage {
+		return mock.NewMockStorage(controller)
 	}
 	eventID := "100500"
 	errDelete := errors.New("delete event error")
 	tests := map[string]struct {
-		request       command.DeleteEventRequest
-		getRepository func(controller *gomock.Controller) event.Repository
+		request    command.DeleteEventRequest
+		getStorage func(controller *gomock.Controller) event.Storage
 	}{
 		"event ID is empty": {
-			request:       command.DeleteEventRequest{ID: ""},
-			getRepository: getMockRepository,
+			request:    command.DeleteEventRequest{ID: ""},
+			getStorage: getMockStorage,
 		},
-		"should return error when event repository returned error": {
+		"should return error when event Storage returned error": {
 			request: command.DeleteEventRequest{ID: eventID},
-			getRepository: func(controller *gomock.Controller) event.Repository {
-				r := mock.NewMockRepository(controller)
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				r := mock.NewMockStorage(controller)
 				r.EXPECT().
 					Delete(context.Background(), eventID).
 					Return(errDelete)
@@ -43,7 +43,7 @@ func Test_deleteEventRequestHandler_Handle_Error(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
 
-			h, err := command.NewDeleteEventRequestHandler(tt.getRepository(controller))
+			h, err := command.NewDeleteEventRequestHandler(tt.getStorage(controller))
 
 			require.NoError(t, err)
 			err = h.Handle(context.Background(), tt.request)
@@ -56,12 +56,12 @@ func Test_deleteEventRequestHandler_Handle(t *testing.T) {
 	eventID := "100500"
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	repository := mock.NewMockRepository(controller)
-	repository.EXPECT().
+	Storage := mock.NewMockStorage(controller)
+	Storage.EXPECT().
 		Delete(context.Background(), eventID).
 		Return(nil)
 
-	h, err := command.NewDeleteEventRequestHandler(repository)
+	h, err := command.NewDeleteEventRequestHandler(Storage)
 
 	require.NoError(t, err)
 	err = h.Handle(context.Background(), command.DeleteEventRequest{ID: eventID})

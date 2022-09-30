@@ -30,7 +30,7 @@ type CreateEventRequestHandler interface {
 
 type createEventRequestHandler struct {
 	idProvider IDProvider
-	repository event.Repository
+	storage    event.Storage
 }
 
 func (h createEventRequestHandler) Handle(
@@ -49,7 +49,7 @@ func (h createEventRequestHandler) Handle(
 	if err := validateUserID(request.UserID); err != nil {
 		return nil, err
 	}
-	isAvailable, err := h.repository.IsDateAvailable(ctx, request.DateTime, request.Duration)
+	isAvailable, err := h.storage.IsDateAvailable(ctx, request.DateTime, request.Duration)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +69,9 @@ func (h createEventRequestHandler) Handle(
 		Description:  request.Description,
 		NotifyBefore: request.NotifyBefore,
 	}
-	err = h.repository.Create(ctx, e)
+	err = h.storage.Create(ctx, e)
 	if err != nil {
-		return nil, fmt.Errorf("repository create event error: %w", err)
+		return nil, fmt.Errorf("storage create event error: %w", err)
 	}
 	return &CreateEventResponse{Event: e}, nil
 }

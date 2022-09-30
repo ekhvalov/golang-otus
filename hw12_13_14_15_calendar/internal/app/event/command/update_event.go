@@ -23,7 +23,7 @@ type UpdateEventRequestHandler interface {
 }
 
 type updateEventRequestHandler struct {
-	repository event.Repository
+	storage event.Storage
 }
 
 func (h updateEventRequestHandler) Handle(ctx context.Context, request UpdateEventRequest) error {
@@ -42,14 +42,14 @@ func (h updateEventRequestHandler) Handle(ctx context.Context, request UpdateEve
 	if err := validateUserID(request.UserID); err != nil {
 		return err
 	}
-	isDateAvailable, err := h.repository.IsDateAvailable(ctx, request.DateTime, request.Duration)
+	isDateAvailable, err := h.storage.IsDateAvailable(ctx, request.DateTime, request.Duration)
 	if err != nil {
 		return err
 	}
 	if !isDateAvailable {
 		return ErrDateBusy
 	}
-	err = h.repository.Update(ctx, request.ID, event.Event{
+	err = h.storage.Update(ctx, request.ID, event.Event{
 		Title:        request.Title,
 		DateTime:     request.DateTime,
 		Duration:     request.Duration,
@@ -58,7 +58,7 @@ func (h updateEventRequestHandler) Handle(ctx context.Context, request UpdateEve
 		NotifyBefore: request.NotifyBefore,
 	})
 	if err != nil {
-		return fmt.Errorf("repository update event error: %w", err)
+		return fmt.Errorf("storage update event error: %w", err)
 	}
 	return nil
 }

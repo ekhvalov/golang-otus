@@ -20,24 +20,24 @@ type GetWeekEventsRequestHandler interface {
 	Handle(ctx context.Context, request GetWeekEventsRequest) (*GetWeekEventsResponse, error)
 }
 
-func NewGetWeekEventsRequestHandler(repository event.Repository) (GetWeekEventsRequestHandler, error) {
-	if repository == nil {
-		return nil, fmt.Errorf("provided repository is nil")
+func NewGetWeekEventsRequestHandler(storage event.Storage) (GetWeekEventsRequestHandler, error) {
+	if storage == nil {
+		return nil, fmt.Errorf("provided storage is nil")
 	}
-	return getWeekEventsRequestHandler{repository: repository}, nil
+	return getWeekEventsRequestHandler{storage: storage}, nil
 }
 
 type getWeekEventsRequestHandler struct {
-	repository event.Repository
+	storage event.Storage
 }
 
 func (h getWeekEventsRequestHandler) Handle(
 	ctx context.Context,
 	request GetWeekEventsRequest,
 ) (*GetWeekEventsResponse, error) {
-	events, err := h.repository.GetWeekEvents(ctx, request.Date)
+	events, err := h.storage.GetWeekEvents(ctx, request.Date)
 	if err != nil {
-		return nil, fmt.Errorf("repository GetWeekEvents error: %w", err)
+		return nil, fmt.Errorf("storage GetWeekEvents error: %w", err)
 	}
 	return &GetWeekEventsResponse{Events: events}, nil
 }

@@ -25,11 +25,11 @@ func Test_updateEventRequestHandler_Handle(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
-	repository := mock.NewMockRepository(controller)
-	repository.EXPECT().
+	storage := mock.NewMockStorage(controller)
+	storage.EXPECT().
 		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 		Return(true, nil)
-	repository.EXPECT().
+	storage.EXPECT().
 		Update(context.Background(), request.ID, event.Event{
 			ID:           "",
 			Title:        request.Title,
@@ -41,7 +41,7 @@ func Test_updateEventRequestHandler_Handle(t *testing.T) {
 		}).
 		Return(nil)
 
-	h := updateEventRequestHandler{repository: repository}
+	h := updateEventRequestHandler{storage: storage}
 
 	err := h.Handle(context.Background(), request)
 	require.NoError(t, err)
@@ -59,13 +59,13 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 	}
 	errIsDateAvailable := errors.New("check date error")
 	errUpdate := errors.New("update event error")
-	getMockRepository := func(controller *gomock.Controller) event.Repository {
-		return mock.NewMockRepository(controller)
+	getMockStorage := func(controller *gomock.Controller) event.Storage {
+		return mock.NewMockStorage(controller)
 	}
 	tests := map[string]struct {
-		request       UpdateEventRequest
-		getRepository func(controller *gomock.Controller) event.Repository
-		wantErr       error
+		request    UpdateEventRequest
+		getStorage func(controller *gomock.Controller) event.Storage
+		wantErr    error
 	}{
 		"validation error when empty ID provided": {
 			request: UpdateEventRequest{
@@ -77,7 +77,7 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 				Description:  "",
 				NotifyBefore: 0,
 			},
-			getRepository: getMockRepository,
+			getStorage: getMockStorage,
 		},
 		"validation error when empty title provided": {
 			request: UpdateEventRequest{
@@ -89,7 +89,7 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 				Description:  "",
 				NotifyBefore: 0,
 			},
-			getRepository: getMockRepository,
+			getStorage: getMockStorage,
 		},
 		"validation error when time is in the past": {
 			request: UpdateEventRequest{
@@ -101,7 +101,7 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 				Description:  "",
 				NotifyBefore: 0,
 			},
-			getRepository: getMockRepository,
+			getStorage: getMockStorage,
 		},
 		"validation error when duration is less than minimal duration": {
 			request: UpdateEventRequest{
@@ -113,7 +113,7 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 				Description:  "",
 				NotifyBefore: 0,
 			},
-			getRepository: getMockRepository,
+			getStorage: getMockStorage,
 		},
 		"validation error when user ID is empty": {
 			request: UpdateEventRequest{
@@ -125,12 +125,12 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 				Description:  "",
 				NotifyBefore: 0,
 			},
-			getRepository: getMockRepository,
+			getStorage: getMockStorage,
 		},
-		"repository.IsDateAvailable error": {
+		"Storage.IsDateAvailable error": {
 			request: request,
-			getRepository: func(controller *gomock.Controller) event.Repository {
-				r := mock.NewMockRepository(controller)
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				r := mock.NewMockStorage(controller)
 				r.EXPECT().
 					IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 					Return(false, errIsDateAvailable)
@@ -140,8 +140,8 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 		},
 		"date busy error": {
 			request: request,
-			getRepository: func(controller *gomock.Controller) event.Repository {
-				r := mock.NewMockRepository(controller)
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				r := mock.NewMockStorage(controller)
 				r.EXPECT().
 					IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 					Return(false, nil)
@@ -149,10 +149,10 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 			},
 			wantErr: ErrDateBusy,
 		},
-		"repository.Update error": {
+		"Storage.Update error": {
 			request: request,
-			getRepository: func(controller *gomock.Controller) event.Repository {
-				r := mock.NewMockRepository(controller)
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				r := mock.NewMockStorage(controller)
 				r.EXPECT().
 					IsDateAvailable(context.Background(), request.DateTime, request.Duration).
 					Return(true, nil)
@@ -176,7 +176,7 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
-			h := updateEventRequestHandler{repository: tt.getRepository(controller)}
+			h := updateEventRequestHandler{storage: tt.getStorage(controller)}
 
 			err := h.Handle(context.Background(), tt.request)
 
