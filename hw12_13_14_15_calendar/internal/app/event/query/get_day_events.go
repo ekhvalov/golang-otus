@@ -20,6 +20,13 @@ type GetDayEventsRequestHandler interface {
 	Handle(ctx context.Context, request GetDayEventsRequest) (*GetDayEventsResponse, error)
 }
 
+func NewGetDayEventsRequestHandler(repository event.Repository) (GetDayEventsRequestHandler, error) {
+	if repository == nil {
+		return nil, fmt.Errorf("provided repository is nil")
+	}
+	return getDayEventsRequestHandler{repository: repository}, nil
+}
+
 type getDayEventsRequestHandler struct {
 	repository event.Repository
 }
