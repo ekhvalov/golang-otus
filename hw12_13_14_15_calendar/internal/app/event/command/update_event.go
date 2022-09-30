@@ -42,7 +42,14 @@ func (h updateEventRequestHandler) Handle(ctx context.Context, request UpdateEve
 	if err := validateUserID(request.UserID); err != nil {
 		return err
 	}
-	err := h.repository.Update(ctx, request.ID, event.Event{
+	isDateAvailable, err := h.repository.IsDateAvailable(ctx, request.DateTime, request.Duration)
+	if err != nil {
+		return err
+	}
+	if !isDateAvailable {
+		return ErrDateBusy
+	}
+	err = h.repository.Update(ctx, request.ID, event.Event{
 		Title:        request.Title,
 		DateTime:     request.DateTime,
 		Duration:     request.Duration,
