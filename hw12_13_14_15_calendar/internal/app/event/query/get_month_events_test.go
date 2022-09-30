@@ -1,18 +1,19 @@
-package query
+package query_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/query"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event/mock"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_getMonthEventsRequestHandler_Handle(t *testing.T) {
-	type fields struct {
-		repository event.Repository
-	}
 	date := time.Now()
 	events := []event.Event{
 		{
@@ -34,39 +35,58 @@ func Test_getMonthEventsRequestHandler_Handle(t *testing.T) {
 			NotifyBefore: time.Hour,
 		},
 	}
+	errGetEvents := errors.New("get events error")
+
 	tests := map[string]struct {
-		fields   fields
-		request  GetMonthEventsRequest
-		want     *GetMonthEventsResponse
-		wantDate time.Time
-		wantErr  bool
+		getRepository func(controller *gomock.Controller) event.Repository
+		request       query.GetMonthEventsRequest
+		want          *query.GetMonthEventsResponse
+		wantErr       bool
+		wantErrType   error
 	}{
 		"should return error when repository returned error": {
-			fields:  fields{repository: event.BrokenRepository{}},
-			request: GetMonthEventsRequest{Date: date},
-			wantErr: true,
+			getRepository: func(controller *gomock.Controller) event.Repository {
+				r := mock.NewMockRepository(controller)
+				r.EXPECT().
+					GetMonthEvents(context.Background(), date).
+					Return(nil, errGetEvents)
+				return r
+			},
+			request:     query.GetMonthEventsRequest{Date: date},
+			wantErr:     true,
+			wantErrType: errGetEvents,
 		},
 		"should return events when no error returned by repository": {
-			fields:   fields{repository: &event.PlainRepository{Events: events}},
-			request:  GetMonthEventsRequest{Date: date},
-			wantErr:  false,
-			want:     &GetMonthEventsResponse{Events: events},
-			wantDate: date,
+			getRepository: func(controller *gomock.Controller) event.Repository {
+				r := mock.NewMockRepository(controller)
+				r.EXPECT().
+					GetMonthEvents(context.Background(), date).
+					Return(events, nil)
+				return r
+			},
+			request: query.GetMonthEventsRequest{Date: date},
+			wantErr: false,
+			want:    &query.GetMonthEventsResponse{Events: events},
 		},
 	}
+
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			h := getMonthEventsRequestHandler{
-				repository: tt.fields.repository,
-			}
+			controller := gomock.NewController(t)
+			defer controller.Finish()
+			h, err := query.NewGetMonthEventsRequestHandler(tt.getRepository(controller))
+			require.NoError(t, err)
+
 			got, err := h.Handle(context.Background(), tt.request)
+
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrType != nil {
+					require.ErrorIs(t, err, tt.wantErrType)
+				}
 				return
 			}
 			require.NoError(t, err)
-			r := tt.fields.repository.(*event.PlainRepository)
-			require.Equal(t, tt.wantDate, r.Date)
 			require.Equal(t, tt.want, got)
 		})
 	}

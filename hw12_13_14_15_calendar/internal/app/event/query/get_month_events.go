@@ -20,6 +20,13 @@ type GetMonthEventsRequestHandler interface {
 	Handle(ctx context.Context, request GetMonthEventsRequest) (*GetMonthEventsResponse, error)
 }
 
+func NewGetMonthEventsRequestHandler(repository event.Repository) (GetMonthEventsRequestHandler, error) {
+	if repository == nil {
+		return nil, fmt.Errorf("provided repository is nil")
+	}
+	return getMonthEventsRequestHandler{repository: repository}, nil
+}
+
 type getMonthEventsRequestHandler struct {
 	repository event.Repository
 }
