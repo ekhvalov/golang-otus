@@ -27,9 +27,6 @@ func Test_updateEventRequestHandler_Handle(t *testing.T) {
 
 	storage := mock.NewMockStorage(controller)
 	storage.EXPECT().
-		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(true, nil)
-	storage.EXPECT().
 		Update(context.Background(), request.ID, event.Event{
 			ID:           "",
 			Title:        request.Title,
@@ -57,7 +54,6 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 		Description:  "Description",
 		NotifyBefore: time.Hour,
 	}
-	errIsDateAvailable := errors.New("check date error")
 	errUpdate := errors.New("update event error")
 	getMockStorage := func(controller *gomock.Controller) event.Storage {
 		return mock.NewMockStorage(controller)
@@ -127,35 +123,10 @@ func Test_updateEventRequestHandler_Handle_Error(t *testing.T) {
 			},
 			getStorage: getMockStorage,
 		},
-		"Storage.IsDateAvailable error": {
+		"storage.Update error": {
 			request: request,
 			getStorage: func(controller *gomock.Controller) event.Storage {
 				r := mock.NewMockStorage(controller)
-				r.EXPECT().
-					IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-					Return(false, errIsDateAvailable)
-				return r
-			},
-			wantErr: errIsDateAvailable,
-		},
-		"date busy error": {
-			request: request,
-			getStorage: func(controller *gomock.Controller) event.Storage {
-				r := mock.NewMockStorage(controller)
-				r.EXPECT().
-					IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-					Return(false, nil)
-				return r
-			},
-			wantErr: ErrDateBusy,
-		},
-		"Storage.Update error": {
-			request: request,
-			getStorage: func(controller *gomock.Controller) event.Storage {
-				r := mock.NewMockStorage(controller)
-				r.EXPECT().
-					IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-					Return(true, nil)
 				r.EXPECT().
 					Update(context.Background(), request.ID, event.Event{
 						Title:        request.Title,

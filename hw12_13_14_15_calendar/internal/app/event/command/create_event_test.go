@@ -85,58 +85,16 @@ func Test_When_ValidationErrorOccurred_Then_HandlerShouldReturnError(t *testing.
 	}
 }
 
-func Test_When_StorageIsAvailableReturnedError_Then_HandlerShouldReturnError(t *testing.T) {
-	controller := gomock.NewController(t)
-	defer controller.Finish()
-	errStorage := errors.New("storage error")
-	storage := storagemock.NewMockStorage(controller)
-	storage.EXPECT().
-		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(false, errStorage)
-	h := createEventRequestHandler{
-		idProvider: nil,
-		storage:    storage,
-	}
-
-	response, err := h.Handle(context.Background(), request)
-
-	require.Error(t, err)
-	require.ErrorIs(t, err, errStorage)
-	require.Nil(t, response)
-}
-
-func Test_When_RequestedDateIsBusy_Then_HandlerShouldReturnErrDateBusy(t *testing.T) {
-	controller := gomock.NewController(t)
-	defer controller.Finish()
-	Storage := storagemock.NewMockStorage(controller)
-	Storage.EXPECT().
-		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(false, nil)
-	h := createEventRequestHandler{
-		idProvider: nil,
-		storage:    Storage,
-	}
-
-	response, err := h.Handle(context.Background(), request)
-
-	require.Error(t, err)
-	require.ErrorIs(t, err, ErrDateBusy)
-	require.Nil(t, response)
-}
-
 func Test_When_IDProviderReturnedError_Then_HandlerShouldReturnError(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	errProvider := errors.New("provider error")
 	provider := providermock.NewMockIDProvider(controller)
 	provider.EXPECT().GetID().Return("", errProvider)
-	Storage := storagemock.NewMockStorage(controller)
-	Storage.EXPECT().
-		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(true, nil)
+	storage := storagemock.NewMockStorage(controller)
 	h := createEventRequestHandler{
 		idProvider: provider,
-		storage:    Storage,
+		storage:    storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)
@@ -148,17 +106,14 @@ func Test_When_IDProviderReturnedError_Then_HandlerShouldReturnError(t *testing.
 func Test_When_StorageCreateErrorOccurred_Then_HandlerShouldReturnError(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	Storage := storagemock.NewMockStorage(controller)
-	Storage.EXPECT().
-		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(true, nil)
+	storage := storagemock.NewMockStorage(controller)
 	errCreateEvent := errors.New("create event error")
-	Storage.EXPECT().
+	storage.EXPECT().
 		Create(gomock.Any(), gomock.Any()).
 		Return(errCreateEvent)
 	h := createEventRequestHandler{
 		idProvider: getPlainIDProvider(controller),
-		storage:    Storage,
+		storage:    storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)
@@ -170,16 +125,13 @@ func Test_When_StorageCreateErrorOccurred_Then_HandlerShouldReturnError(t *testi
 func Test_When_NoErrorsOccurred_Then_HandlerShouldReturnCreateEventResponse(t *testing.T) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	Storage := storagemock.NewMockStorage(controller)
-	Storage.EXPECT().
-		IsDateAvailable(context.Background(), request.DateTime, request.Duration).
-		Return(true, nil)
-	Storage.EXPECT().
+	storage := storagemock.NewMockStorage(controller)
+	storage.EXPECT().
 		Create(gomock.Any(), gomock.Any()).
 		Return(nil)
 	h := createEventRequestHandler{
 		idProvider: getPlainIDProvider(controller),
-		storage:    Storage,
+		storage:    storage,
 	}
 
 	response, err := h.Handle(context.Background(), request)

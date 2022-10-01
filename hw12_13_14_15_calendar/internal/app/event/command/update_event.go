@@ -42,14 +42,7 @@ func (h updateEventRequestHandler) Handle(ctx context.Context, request UpdateEve
 	if err := validateUserID(request.UserID); err != nil {
 		return err
 	}
-	isDateAvailable, err := h.storage.IsDateAvailable(ctx, request.DateTime, request.Duration)
-	if err != nil {
-		return err
-	}
-	if !isDateAvailable {
-		return ErrDateBusy
-	}
-	err = h.storage.Update(ctx, request.ID, event.Event{
+	err := h.storage.Update(ctx, request.ID, event.Event{
 		Title:        request.Title,
 		DateTime:     request.DateTime,
 		Duration:     request.Duration,
@@ -58,7 +51,7 @@ func (h updateEventRequestHandler) Handle(ctx context.Context, request UpdateEve
 		NotifyBefore: request.NotifyBefore,
 	})
 	if err != nil {
-		return fmt.Errorf("storage update event error: %w", err)
+		return fmt.Errorf("update event error: %w", err)
 	}
 	return nil
 }
