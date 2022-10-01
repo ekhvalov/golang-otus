@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage"
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 )
 
 type App struct {
 	logger  Logger
-	storage Storage
+	storage event.Storage
 }
 
 type Logger interface {
@@ -18,14 +18,7 @@ type Logger interface {
 	Error(msg string)
 }
 
-type Storage interface {
-	CreateEvent(ctx context.Context, e storage.Event) error
-	UpdateEvent(ctx context.Context, e storage.Event) error
-	DeleteEvent(ctx context.Context, e storage.Event) error
-	GetEvents(ctx context.Context) ([]storage.Event, error)
-}
-
-func New(logger Logger, storage Storage) *App {
+func New(logger Logger, storage event.Storage) *App {
 	return &App{
 		logger:  logger,
 		storage: storage,
@@ -33,5 +26,5 @@ func New(logger Logger, storage Storage) *App {
 }
 
 func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	return a.storage.CreateEvent(ctx, storage.Event{ID: id, Title: title})
+	return a.storage.Create(ctx, event.Event{ID: id, Title: title})
 }

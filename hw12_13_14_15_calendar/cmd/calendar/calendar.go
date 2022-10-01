@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
@@ -97,7 +98,7 @@ func getViper() (*viper.Viper, error) {
 	return v, nil
 }
 
-func createStorage(cfg StorageConf) (app.Storage, error) {
+func createStorage(cfg StorageConf) (event.Storage, error) {
 	switch strings.ToLower(cfg.Type) {
 	case "memory":
 		return memorystorage.New(), nil
