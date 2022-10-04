@@ -22,6 +22,15 @@ type UpdateEventRequestHandler interface {
 	Handle(ctx context.Context, request UpdateEventRequest) error
 }
 
+func NewUpdateEventRequestHandler(storage event.Storage) (UpdateEventRequestHandler, error) {
+	if storage == nil {
+		return nil, fmt.Errorf("storage is nil")
+	}
+	return &updateEventRequestHandler{
+		storage: storage,
+	}, nil
+}
+
 type updateEventRequestHandler struct {
 	storage event.Storage
 }

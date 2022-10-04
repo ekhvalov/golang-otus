@@ -25,6 +25,19 @@ type CreateEventRequestHandler interface {
 	Handle(ctx context.Context, request CreateEventRequest) (*CreateEventResponse, error)
 }
 
+func NewCreateEventRequestHandler(provider IDProvider, storage event.Storage) (CreateEventRequestHandler, error) {
+	if provider == nil {
+		return nil, fmt.Errorf("id provider is nil")
+	}
+	if storage == nil {
+		return nil, fmt.Errorf("storage is nil")
+	}
+	return &createEventRequestHandler{
+		idProvider: provider,
+		storage:    storage,
+	}, nil
+}
+
 type createEventRequestHandler struct {
 	idProvider IDProvider
 	storage    event.Storage
