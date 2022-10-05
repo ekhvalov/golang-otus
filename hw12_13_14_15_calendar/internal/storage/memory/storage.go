@@ -10,15 +10,24 @@ import (
 )
 
 type Storage struct {
-	events map[string]event.Event
-	mu     sync.RWMutex
+	events     map[string]event.Event
+	mu         sync.RWMutex
+	idProvider IDProvider
 }
 
-func New() *Storage {
-	return &Storage{events: make(map[string]event.Event)}
+func New(idProvider IDProvider) *Storage {
+	return &Storage{
+		idProvider: idProvider,
+		events:     make(map[string]event.Event),
+	}
 }
 
 func (s *Storage) Create(_ context.Context, e event.Event) error {
+	id, err := s.idProvider.GenerateID()
+	if err != nil {
+		return fmt.Errorf("generate ID error: %w", err)
+	}
+	e.ID = id
 	s.mu.RLock()
 	for _, e2 := range s.events {
 		if isOverlapped(e, e2) {

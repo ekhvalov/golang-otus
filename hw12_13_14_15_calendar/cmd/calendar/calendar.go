@@ -101,7 +101,7 @@ func getViper() (*viper.Viper, error) {
 func createStorage(cfg StorageConf) (event.Storage, error) {
 	switch strings.ToLower(cfg.Type) {
 	case "memory":
-		return memorystorage.New(), nil
+		return memorystorage.New(memorystorage.UUIDProvider{}), nil
 	default:
 		return nil, fmt.Errorf("undefined storage type: %s", cfg.Type)
 	}

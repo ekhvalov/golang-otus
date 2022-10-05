@@ -12,8 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type idProvider struct {
+	id int
+}
+
+func (p *idProvider) GenerateID() (string, error) {
+	p.id++
+	return strconv.Itoa(p.id), nil
+}
+
 func TestConcurrent(t *testing.T) {
-	s := memorystorage.New()
+	s := memorystorage.New(&idProvider{})
 	ctx := context.Background()
 	wg := &sync.WaitGroup{}
 	wg.Add(3)
@@ -87,7 +96,7 @@ func TestStorage_GetDayEvents(t *testing.T) {
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			s := memorystorage.New()
+			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
 				err := s.Create(context.Background(), e)
 				require.NoError(t, err)
@@ -137,7 +146,7 @@ func TestStorage_GetWeekEvents(t *testing.T) {
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			s := memorystorage.New()
+			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
 				err := s.Create(context.Background(), e)
 				require.NoError(t, err)
@@ -187,7 +196,7 @@ func TestStorage_GetMonthEvents(t *testing.T) {
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			s := memorystorage.New()
+			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
 				err := s.Create(context.Background(), e)
 				require.NoError(t, err)
@@ -271,7 +280,7 @@ func TestStorage_Create(t *testing.T) {
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			s := memorystorage.New()
+			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
 				err := s.Create(context.Background(), e)
 				require.NoError(t, err)
@@ -293,16 +302,14 @@ func TestStorage_Create(t *testing.T) {
 
 func TestStorage_Update(t *testing.T) {
 	event1000to1130 := event.Event{
-		ID:       "1",
 		DateTime: time.Date(2022, time.January, 1, 10, 0, 0, 0, time.UTC),
 		Duration: time.Minute * 90,
 	}
 	event1230to1530 := event.Event{
-		ID:       "2",
 		DateTime: time.Date(2022, time.January, 1, 12, 30, 0, 0, time.UTC),
 		Duration: time.Hour * 3,
 	}
-	updatableEventID := "100500"
+	updatableEventID := "3"
 	updatableEvent := event.Event{
 		ID:       updatableEventID,
 		DateTime: time.Date(2022, time.January, 1, 11, 30, 0, 0, time.UTC),
@@ -369,7 +376,7 @@ func TestStorage_Update(t *testing.T) {
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			s := memorystorage.New()
+			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
 				err := s.Create(context.Background(), e)
 				require.NoError(t, err)
