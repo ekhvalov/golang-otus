@@ -1,8 +1,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 )
 
@@ -23,8 +21,4 @@ func New(logger Logger, storage event.Storage) *App {
 		logger:  logger,
 		storage: storage,
 	}
-}
-
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	return a.storage.Create(ctx, event.Event{ID: id, Title: title})
 }

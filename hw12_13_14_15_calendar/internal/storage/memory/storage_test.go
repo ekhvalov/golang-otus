@@ -33,7 +33,7 @@ func TestConcurrent(t *testing.T) {
 		for i := 0; i < 2000; i++ {
 			e.ID = strconv.Itoa(i)
 			e.Title = strconv.Itoa(i)
-			_ = s.Create(ctx, e)
+			_, _ = s.Create(ctx, e)
 		}
 	}()
 
@@ -98,7 +98,7 @@ func TestStorage_GetDayEvents(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
-				err := s.Create(context.Background(), e)
+				_, err := s.Create(context.Background(), e)
 				require.NoError(t, err)
 			}
 			got, err := s.GetDayEvents(context.Background(), tt.date)
@@ -148,7 +148,7 @@ func TestStorage_GetWeekEvents(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
-				err := s.Create(context.Background(), e)
+				_, err := s.Create(context.Background(), e)
 				require.NoError(t, err)
 			}
 			got, err := s.GetWeekEvents(context.Background(), tt.date)
@@ -198,7 +198,7 @@ func TestStorage_GetMonthEvents(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
-				err := s.Create(context.Background(), e)
+				_, err := s.Create(context.Background(), e)
 				require.NoError(t, err)
 			}
 			got, err := s.GetMonthEvents(context.Background(), tt.date)
@@ -210,12 +210,10 @@ func TestStorage_GetMonthEvents(t *testing.T) {
 
 func TestStorage_Create(t *testing.T) {
 	event1000to1130 := event.Event{
-		ID:       "1",
 		DateTime: time.Date(2022, time.January, 1, 10, 0, 0, 0, time.UTC),
 		Duration: time.Minute * 90,
 	}
 	event1230to1530 := event.Event{
-		ID:       "2",
 		DateTime: time.Date(2022, time.January, 1, 12, 30, 0, 0, time.UTC),
 		Duration: time.Hour * 3,
 	}
@@ -282,11 +280,10 @@ func TestStorage_Create(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
-				err := s.Create(context.Background(), e)
+				_, err := s.Create(context.Background(), e)
 				require.NoError(t, err)
 			}
-			err := s.Create(context.Background(), event.Event{
-				ID:       "100500",
+			e, err := s.Create(context.Background(), event.Event{
 				DateTime: tt.date,
 				Duration: tt.duration,
 			})
@@ -295,6 +292,11 @@ func TestStorage_Create(t *testing.T) {
 				require.ErrorIs(t, err, tt.err)
 			} else {
 				require.NoError(t, err)
+				require.Equal(t, event.Event{
+					ID:       "3",
+					DateTime: tt.date,
+					Duration: tt.duration,
+				}, e)
 			}
 		})
 	}
@@ -378,7 +380,7 @@ func TestStorage_Update(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			s := memorystorage.New(&idProvider{})
 			for _, e := range events {
-				err := s.Create(context.Background(), e)
+				_, err := s.Create(context.Background(), e)
 				require.NoError(t, err)
 			}
 			err := s.Update(context.Background(), updatableEventID, event.Event{

@@ -28,8 +28,8 @@ type Storage interface {
 	// A Create method stores new Event into a storage
 	// Event.ID will be generated inside a storage.
 	// When Event.DateTime and Event.Duration are overlapped with existed events ErrDateBusy will be returned.
-	// ErrStorage could be returned if internal storage error occurred.
-	Create(ctx context.Context, event Event) error
+	// Returns Event with filled ID or ErrStorage if internal storage error occurred.
+	Create(ctx context.Context, event Event) (Event, error)
 	// An Update method updates an Event.
 	// When Event.DateTime and Event.Duration are overlapped with existed events ErrDateBusy will be returned.
 	// ErrStorage could be returned if internal storage error occurred.

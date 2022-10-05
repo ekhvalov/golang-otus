@@ -25,22 +25,15 @@ type CreateEventRequestHandler interface {
 	Handle(ctx context.Context, request CreateEventRequest) (*CreateEventResponse, error)
 }
 
-func NewCreateEventRequestHandler(provider IDProvider, storage event.Storage) (CreateEventRequestHandler, error) {
-	if provider == nil {
-		return nil, fmt.Errorf("id provider is nil")
-	}
+func NewCreateEventRequestHandler(storage event.Storage) (CreateEventRequestHandler, error) {
 	if storage == nil {
 		return nil, fmt.Errorf("storage is nil")
 	}
-	return &createEventRequestHandler{
-		idProvider: provider,
-		storage:    storage,
-	}, nil
+	return &createEventRequestHandler{storage: storage}, nil
 }
 
 type createEventRequestHandler struct {
-	idProvider IDProvider
-	storage    event.Storage
+	storage event.Storage
 }
 
 func (h createEventRequestHandler) Handle(
@@ -59,12 +52,7 @@ func (h createEventRequestHandler) Handle(
 	if err := validateUserID(request.UserID); err != nil {
 		return nil, err
 	}
-	ID, err := h.idProvider.GetID()
-	if err != nil {
-		return nil, fmt.Errorf("provide ID error: %w", err)
-	}
 	e := event.Event{
-		ID:           ID,
 		Title:        request.Title,
 		DateTime:     request.DateTime,
 		Duration:     request.Duration,
@@ -72,9 +60,9 @@ func (h createEventRequestHandler) Handle(
 		Description:  request.Description,
 		NotifyBefore: request.NotifyBefore,
 	}
-	err = h.storage.Create(ctx, e)
+	newEvent, err := h.storage.Create(ctx, e)
 	if err != nil {
 		return nil, fmt.Errorf("create event error: %w", err)
 	}
-	return &CreateEventResponse{Event: e}, nil
+	return &CreateEventResponse{Event: newEvent}, nil
 }

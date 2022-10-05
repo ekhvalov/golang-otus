@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	providermock "github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command/mock"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 	storagemock "github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event/mock"
 	"github.com/golang/mock/gomock"
@@ -14,12 +13,6 @@ import (
 )
 
 var (
-	eventID            = "100500"
-	getPlainIDProvider = func(controller *gomock.Controller) IDProvider {
-		p := providermock.NewMockIDProvider(controller)
-		p.EXPECT().GetID().Return(eventID, nil)
-		return p
-	}
 	request = CreateEventRequest{
 		Title:        "Event 1",
 		DateTime:     time.Now().Add(time.Hour),
@@ -27,6 +20,15 @@ var (
 		UserID:       "10",
 		Description:  "Description",
 		NotifyBefore: time.Hour,
+	}
+	newEvent = event.Event{
+		ID:           "10",
+		Title:        request.Title,
+		DateTime:     request.DateTime,
+		Duration:     request.Duration,
+		UserID:       request.UserID,
+		Description:  request.Description,
+		NotifyBefore: request.NotifyBefore,
 	}
 )
 
@@ -77,30 +79,12 @@ func Test_When_ValidationErrorOccurred_Then_HandlerShouldReturnError(t *testing.
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			c := createEventRequestHandler{idProvider: nil, storage: nil}
+			c := createEventRequestHandler{storage: nil}
 			got, err := c.Handle(context.Background(), tt.request)
 			require.Error(t, err)
 			require.Nil(t, got)
 		})
 	}
-}
-
-func Test_When_IDProviderReturnedError_Then_HandlerShouldReturnError(t *testing.T) {
-	controller := gomock.NewController(t)
-	defer controller.Finish()
-	errProvider := errors.New("provider error")
-	provider := providermock.NewMockIDProvider(controller)
-	provider.EXPECT().GetID().Return("", errProvider)
-	storage := storagemock.NewMockStorage(controller)
-	h := createEventRequestHandler{
-		idProvider: provider,
-		storage:    storage,
-	}
-
-	response, err := h.Handle(context.Background(), request)
-	require.Error(t, err)
-	require.ErrorIs(t, err, errProvider)
-	require.Nil(t, response)
 }
 
 func Test_When_StorageCreateErrorOccurred_Then_HandlerShouldReturnError(t *testing.T) {
@@ -110,11 +94,8 @@ func Test_When_StorageCreateErrorOccurred_Then_HandlerShouldReturnError(t *testi
 	errCreateEvent := errors.New("create event error")
 	storage.EXPECT().
 		Create(gomock.Any(), gomock.Any()).
-		Return(errCreateEvent)
-	h := createEventRequestHandler{
-		idProvider: getPlainIDProvider(controller),
-		storage:    storage,
-	}
+		Return(event.Event{}, errCreateEvent)
+	h := createEventRequestHandler{storage: storage}
 
 	response, err := h.Handle(context.Background(), request)
 	require.Error(t, err)
@@ -126,23 +107,21 @@ func Test_When_NoErrorsOccurred_Then_HandlerShouldReturnCreateEventResponse(t *t
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	storage := storagemock.NewMockStorage(controller)
+
 	storage.EXPECT().
-		Create(gomock.Any(), gomock.Any()).
-		Return(nil)
-	h := createEventRequestHandler{
-		idProvider: getPlainIDProvider(controller),
-		storage:    storage,
-	}
+		Create(gomock.Any(), event.Event{
+			ID:           "",
+			Title:        request.Title,
+			DateTime:     request.DateTime,
+			Duration:     request.Duration,
+			UserID:       request.UserID,
+			Description:  request.Description,
+			NotifyBefore: request.NotifyBefore,
+		}).
+		Return(newEvent, nil)
+	h := createEventRequestHandler{storage: storage}
 
 	response, err := h.Handle(context.Background(), request)
 	require.NoError(t, err)
-	require.Equal(t, &CreateEventResponse{Event: event.Event{
-		ID:           eventID,
-		Title:        request.Title,
-		DateTime:     request.DateTime,
-		Duration:     request.Duration,
-		UserID:       request.UserID,
-		Description:  request.Description,
-		NotifyBefore: request.NotifyBefore,
-	}}, response)
+	require.Equal(t, &CreateEventResponse{Event: newEvent}, response)
 }

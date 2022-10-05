@@ -22,27 +22,27 @@ func New(idProvider IDProvider) *Storage {
 	}
 }
 
-func (s *Storage) Create(_ context.Context, e event.Event) error {
+func (s *Storage) Create(_ context.Context, e event.Event) (event.Event, error) {
 	id, err := s.idProvider.GenerateID()
 	if err != nil {
-		return fmt.Errorf("generate ID error: %w", err)
+		return event.Event{}, fmt.Errorf("generate ID error: %w", err)
 	}
 	e.ID = id
 	s.mu.RLock()
 	for _, e2 := range s.events {
 		if isOverlapped(e, e2) {
 			s.mu.RUnlock()
-			return event.ErrDateBusy
+			return event.Event{}, event.ErrDateBusy
 		}
 	}
 	if _, ok := s.events[e.ID]; ok {
-		return fmt.Errorf("event with id '%s' is already exist", e.ID)
+		return event.Event{}, fmt.Errorf("event with id '%s' is already exist", e.ID)
 	}
 	s.mu.RUnlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.events[e.ID] = e
-	return nil
+	return e, nil
 }
 
 func (s *Storage) Update(_ context.Context, eventID string, e event.Event) error {
