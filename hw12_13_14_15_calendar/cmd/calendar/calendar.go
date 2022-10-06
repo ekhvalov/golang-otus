@@ -48,9 +48,12 @@ func run() {
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create storage error: %w", err))
 	}
-	calendar := app.New(logg, storage)
+	calendar, err := app.New(logg, storage)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
 
-	server := internalhttp.NewServer(cfg.HTTP.Address, cfg.HTTP.Port, logg, calendar)
+	server := internalhttp.NewServer(logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -62,17 +65,18 @@ func run() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := server.Shutdown(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
+	if err := server.Start(srvAddr); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		return
 	}
 }
 

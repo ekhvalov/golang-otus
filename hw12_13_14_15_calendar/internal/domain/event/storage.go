@@ -8,7 +8,10 @@ import (
 	"time"
 )
 
-var ErrDateBusy = errors.New("event date is busy")
+var (
+	ErrDateBusy      = errors.New("event date is busy")
+	ErrEventNotFound = errors.New("event not found")
+)
 
 // ErrStorage will be returned in case of internal storage error.
 type ErrStorage struct {

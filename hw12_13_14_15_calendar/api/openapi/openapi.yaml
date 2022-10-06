@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: Calendar REST API
+  version: 1.0.0
+paths:
+  /events:
+    post:
+      summary: Create new event
+      responses:
+        "200":
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Requested event date is busy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewEvent'
+    put:
+      summary: Update event
+      responses:
+        "200":
+          description: Event updated
+        "404":
+          description: Event not found
+        "409":
+          description: Requested event date is busy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+    get:
+      summary: Get list of events
+      responses:
+        "200":
+          description: Retrieves a list of events for specified period
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/EventsPeriod'
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+            description: Period start (unix timestamp)
+
+  /events/{id}:
+    delete:
+      summary: Delete an event
+      operationId: deleteEventsID
+      responses:
+        "200":
+          description: Event successfully deleted
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: event id
+
+
+components:
+  schemas:
+    Event:
+      allOf:
+        - $ref: '#/components/schemas/NewEvent'
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+
+    NewEvent:
+      type: object
+      required:
+        - title
+        - date
+        - duration
+      properties:
+        title:
+          type: string
+          description: Event title
+        date:
+          type: integer
+          format: int64
+          description: Event start date (unix timestamp)
+        duration:
+          type: integer
+          description: Duration of an event (in minutes)
+        description:
+          type: string
+          description: Event description
+        notifyBefore:
+          type: integer
+          description: Amount of minutes to notify user before the event
+
+    EventsPeriod: # query parameter
+      type: string
+      enum: [ "day", "week", "month" ]
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string

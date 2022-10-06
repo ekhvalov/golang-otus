@@ -1,14 +1,30 @@
 package internalhttp
 
+//nolint:lll
+//go:generate oapi-codegen -package openapi -generate types -old-config-style -o ../../../pkg/api/openapi/types.gen.go ../../../api/openapi/openapi.yaml
+//go:generate oapi-codegen -package openapi -generate spec -old-config-style -o ../../../pkg/api/openapi/spec.gen.go ../../../api/openapi/openapi.yaml
+//go:generate oapi-codegen -package openapi -generate chi-server -old-config-style -o ../../../pkg/api/openapi/server.gen.go ../../../api/openapi/openapi.yaml
+//go:generate oapi-codegen -package openapi -generate client -old-config-style -o ../../../pkg/api/openapi/client.gen.go ../../../api/openapi/openapi.yaml
+
 import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http/event"
+	"github.com/ekhvalov/hw12_13_14_15_calendar/pkg/api/openapi"
+	"github.com/go-chi/chi/v5"
 )
 
-type Server struct {
-	srv    *http.Server
-	logger Logger
+type Server interface {
+	Start(address string) error
+	Shutdown(context context.Context) error
+}
+
+type server struct {
+	logger app.Logger
+	s      *http.Server
 }
 
 type Logger interface {
@@ -18,33 +34,26 @@ type Logger interface {
 	Error(msg string)
 }
 
-type Application interface { // TODO
-}
+func NewServer(logger Logger, app app.Application) Server {
+	eventsHandler := event.NewEventHandler(app, logger)
 
-func NewServer(address string, port uint, logger Logger, _ Application) *Server {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		_, _ = writer.Write([]byte("hello world"))
-	})
+	router := chi.NewRouter()
+	router.Use(loggingMiddleware(logger))
 
-	middleware := loggingMiddleware(logger, handler)
+	openapi.HandlerFromMux(eventsHandler, router)
 
-	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", address, port),
-		Handler: middleware,
-	}
-
-	return &Server{
-		srv:    server,
+	return &server{
 		logger: logger,
+		s:      &http.Server{Handler: router},
 	}
 }
 
-func (s *Server) Start(_ context.Context) error {
-	s.logger.Info(fmt.Sprintf("listen: %s", s.srv.Addr))
-	return s.srv.ListenAndServe()
+func (s *server) Start(address string) error {
+	s.logger.Info(fmt.Sprintf("listen: %s", address))
+	s.s.Addr = address
+	return s.s.ListenAndServe()
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	return s.srv.Shutdown(ctx)
+func (s *server) Shutdown(ctx context.Context) error {
+	return s.s.Shutdown(ctx)
 }
