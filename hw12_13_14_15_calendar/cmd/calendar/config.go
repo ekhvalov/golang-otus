@@ -10,6 +10,7 @@ type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
 	HTTP    HTTPConf
+	GRPC    GRPCConf
 }
 
 type LoggerConf struct {
@@ -21,6 +22,11 @@ type StorageConf struct {
 }
 
 type HTTPConf struct {
+	Address string
+	Port    uint
+}
+
+type GRPCConf struct {
 	Address string
 	Port    uint
 }
@@ -40,10 +46,16 @@ func NewConfig(v *viper.Viper) Config {
 			Address: v.GetString(httpAddressKey),
 			Port:    v.GetUint(httpPortKey),
 		},
+		GRPC: GRPCConf{
+			Address: v.GetString(grpcAddressKey),
+			Port:    v.GetUint(grpcPortKey),
+		},
 	}
 }
 
 const (
+	grpcAddressKey = "grpc.address"
+	grpcPortKey    = "grpc.port"
 	httpAddressKey = "http.address"
 	httpPortKey    = "http.port"
 	loggerLevelKey = "logger.level"

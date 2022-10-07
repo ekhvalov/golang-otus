@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package event;
+option go_package = "./;grpc";
+
+service Calendar {
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventReply) {}
+  rpc UpdateEvent(UpdateEventRequest) returns (Empty) {}
+  rpc DeleteEvent(DeleteEventRequest) returns (Empty) {}
+  rpc GetEvents(GetEventsRequest) returns (GetEventsReply) {}
+}
+
+message CreateEventRequest {
+  string title = 2;
+  int64 date = 3; // Event start date (unix timestamp)
+  int32 duration = 4; // Duration of an event (in minutes)
+  string description = 5;
+  int32 notify_before = 6;
+}
+
+message CreateEventReply {
+  string id = 1;
+  string title = 2;
+  int64 date = 3; // Event start date (unix timestamp)
+  int32 duration = 4; // Duration of an event (in minutes)
+  string description = 5;
+  int32 notify_before = 6;
+}
+
+message UpdateEventRequest {
+  string id = 1;
+  string title = 2;
+  int64 date = 3; // Event start date (unix timestamp)
+  int32 duration = 4; // Duration of an event (in minutes)
+  string description = 5;
+  int32 notify_before = 6;
+}
+
+message DeleteEventRequest {
+  string id = 1;
+}
+
+message GetEventsRequest {
+  enum GetEventsPeriod {
+    GET_EVENTS_PERIOD_UNSPECIFIED = 0;
+    GET_EVENTS_PERIOD_DAY = 1;
+    GET_EVENTS_PERIOD_WEEK = 2;
+    GET_EVENTS_PERIOD_MONTH = 3;
+  }
+  GetEventsPeriod period = 1;
+  int64 date = 2; // Period start (unix timestamp)
+}
+
+message GetEventsReply {
+  repeated Event events = 1;
+}
+
+message Event {
+  string id = 1;
+  string title = 2;
+  int64 date = 3; // Event start date (unix timestamp)
+  int32 duration = 4; // Duration of an event (in minutes)
+  string description = 5;
+  int32 notify_before = 6;
+}
+
+message Empty {}

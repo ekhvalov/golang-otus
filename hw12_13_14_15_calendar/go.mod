@@ -14,4 +14,6 @@ require (
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	google.golang.org/grpc v1.46.2
+	google.golang.org/protobuf v1.28.0
 )

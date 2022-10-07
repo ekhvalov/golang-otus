@@ -7,12 +7,14 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/spf13/cobra"
@@ -53,7 +55,11 @@ func run() {
 		cobra.CheckErr(err)
 	}
 
-	server := internalhttp.NewServer(logg, calendar)
+	httpServer := internalhttp.NewServer(logg, calendar)
+	grpcServer, err := internalgrpc.NewServer(calendar, logg)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -65,19 +71,37 @@ func run() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Shutdown(ctx); err != nil {
+		if err := httpServer.Shutdown(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
+		}
+		if err := grpcServer.Shutdown(ctx); err != nil {
+			logg.Error("failed to stop grpc server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 
-	srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
-	if err := server.Start(srvAddr); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		return
-	}
+	// TODO: Run http and grpc
+	go func(wg *sync.WaitGroup) {
+		srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
+		if err := httpServer.Start(srvAddr); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+		wg.Done()
+	}(&wg)
+	go func(wg *sync.WaitGroup) {
+		srvAddr := fmt.Sprintf("%s:%d", cfg.GRPC.Address, cfg.GRPC.Port)
+		if err := grpcServer.Start(srvAddr); err != nil {
+			logg.Error("failed to start grpc server: " + err.Error())
+			cancel()
+		}
+		wg.Done()
+	}(&wg)
+
+	logg.Info("calendar is running...")
+	wg.Wait()
 }
 
 func getViper() (*viper.Viper, error) {
