@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http/event"
@@ -44,7 +45,11 @@ func NewServer(logger Logger, app app.Application) Server {
 
 	return &server{
 		logger: logger,
-		s:      &http.Server{Handler: router},
+		s: &http.Server{
+			Handler:      router,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+		},
 	}
 }
 
