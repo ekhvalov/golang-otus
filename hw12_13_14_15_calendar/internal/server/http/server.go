@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type Server struct {
@@ -30,8 +31,10 @@ func NewServer(address string, port uint, logger Logger, _ Application) *Server 
 	middleware := loggingMiddleware(logger, handler)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", address, port),
-		Handler: middleware,
+		Addr:         fmt.Sprintf("%s:%d", address, port),
+		Handler:      middleware,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
 	}
 
 	return &Server{
