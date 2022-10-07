@@ -22,7 +22,7 @@ func main() {
 		fmt.Println(err)
 		fmt.Printf("Usage %s [--timeout] host port\n", os.Args[0])
 		flag.PrintDefaults()
-		os.Exit(1)
+		return
 	}
 	tc := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
 
