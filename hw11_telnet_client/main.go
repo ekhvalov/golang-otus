@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 )
@@ -33,14 +33,18 @@ func main() {
 	}
 	_, _ = fmt.Fprintf(os.Stderr, "Connected to: %s\n", address)
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go send(&tc, &wg)
-	go receive(&tc, &wg)
-	go handleSignal(&wg)
+	ctx, cancel := signal.NotifyContext(context.Background(),
+		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
 
-	wg.Wait()
-	_ = tc.Close()
+	go send(&tc, cancel)
+	go receive(&tc, cancel)
+
+	<-ctx.Done()
+	err = tc.Close()
+	if err != nil {
+		fmt.Println("connection close error: " + err.Error())
+	}
 }
 
 func getAddress() (string, error) {
@@ -55,27 +59,20 @@ func getAddress() (string, error) {
 	return fmt.Sprintf("%s:%d", host, port), nil
 }
 
-func send(tc *TelnetClient, wg *sync.WaitGroup) {
+func send(tc *TelnetClient, cancelFunc context.CancelFunc) {
 	if err := (*tc).Send(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "bye-bye\n")
 	}
-	wg.Done()
+	cancelFunc()
 }
 
-func receive(tc *TelnetClient, wg *sync.WaitGroup) {
+func receive(tc *TelnetClient, cancelFunc context.CancelFunc) {
 	if err := (*tc).Receive(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "Connection closed by peer\n")
 	}
-	wg.Done()
-}
-
-func handleSignal(wg *sync.WaitGroup) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT)
-	<-c
-	wg.Done()
+	cancelFunc()
 }
