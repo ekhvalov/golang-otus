@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -13,12 +12,12 @@ import (
 
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -38,7 +37,7 @@ func init() {
 }
 
 func run() {
-	v, err := getViper()
+	v, err := config.CreateViper(cfgFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create config error: %w", err))
 	}
@@ -102,28 +101,6 @@ func run() {
 
 	logg.Info("calendar is running...")
 	wg.Wait()
-}
-
-func getViper() (*viper.Viper, error) {
-	v := viper.New()
-	v.SetEnvPrefix(configEnvPrefix)
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
-
-	if cfgFile == "" {
-		err := v.ReadConfig(bytes.NewBuffer([]byte("")))
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		v.SetConfigFile(cfgFile)
-		err := v.ReadInConfig()
-		if err != nil {
-			return nil, fmt.Errorf("config file '%s' error: %w", cfgFile, err)
-		}
-		fmt.Println("Using config file:", cfgFile)
-	}
-	return v, nil
 }
 
 func createStorage(cfg StorageConf) (event.Storage, error) {
