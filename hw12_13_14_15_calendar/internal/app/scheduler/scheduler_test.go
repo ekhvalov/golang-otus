@@ -132,3 +132,52 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 		require.Equal(t, expectedEventsTitles, actualEventsTitles)
 	})
 }
+
+func Test_scheduler_CleanOldEvents(t *testing.T) {
+	errStorage := event.NewErrStorage("storage error")
+	tests := map[string]struct {
+		getStorage     func(controller *gomock.Controller) event.Storage
+		contextTimeout time.Duration
+		cleanTimeout   time.Duration
+		err            error
+	}{
+		"when storage error occurred then error should be returned": {
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				s := mock.NewMockStorage(controller)
+				s.EXPECT().
+					DeleteEventsOlderThan(gomock.Any(), gomock.Any()).
+					Return(errStorage)
+				return s
+			},
+			contextTimeout: time.Millisecond * 100,
+			cleanTimeout:   time.Millisecond * 20,
+			err:            errStorage,
+		},
+		"when context timed out then no calls should be done": {
+			getStorage: func(controller *gomock.Controller) event.Storage {
+				return mock.NewMockStorage(controller)
+			},
+			contextTimeout: time.Millisecond * 20,
+			cleanTimeout:   time.Millisecond * 100,
+			err:            nil,
+		},
+	}
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			controller := gomock.NewController(t)
+			s, err := NewScheduler(tt.getStorage(controller), queuemock.NewMockProducer(controller))
+			require.NoError(t, err)
+			ctx, cancel := context.WithTimeout(context.Background(), tt.contextTimeout)
+			defer cancel()
+
+			err = s.CleanOldEvents(ctx, time.Hour, tt.cleanTimeout)
+
+			if tt.err != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tt.err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

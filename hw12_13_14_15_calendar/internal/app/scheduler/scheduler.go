@@ -34,7 +34,7 @@ func errorsToStrings(errors []error) []string {
 
 type Scheduler interface {
 	FindNotificationReadyEvents(ctx context.Context, interval time.Duration) error
-	CleanOldEvents(ctx context.Context, outDateInterval time.Duration) error
+	CleanOldEvents(ctx context.Context, outDatePeriod, cleanInterval time.Duration) error
 }
 
 func NewScheduler(storage event.Storage, producer queue.Producer) (Scheduler, error) {
@@ -95,7 +95,25 @@ func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval ti
 	}
 }
 
-func (s *scheduler) CleanOldEvents(ctx context.Context, outDateInterval time.Duration) error {
-	// TODO implement me
-	panic("implement me")
+func (s *scheduler) CleanOldEvents(ctx context.Context, outDatePeriod, cleanInterval time.Duration) error {
+	t := time.NewTicker(cleanInterval)
+	defer func() {
+		t.Stop()
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-t.C:
+				outDateTime := time.Now().Unix() - int64(outDatePeriod.Seconds())
+				if err := s.storage.DeleteEventsOlderThan(ctx, time.Unix(outDateTime, 0)); err != nil {
+					return fmt.Errorf("delete old events error: %w", err)
+				}
+			}
+		}
+	}
 }
