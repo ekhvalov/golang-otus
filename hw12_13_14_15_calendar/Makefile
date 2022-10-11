@@ -34,6 +34,7 @@ lint: install-lint-deps
 generate:
 	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/app
 	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command
+	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/notification/queue
 	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event
 	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http
 

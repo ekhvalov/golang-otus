@@ -65,6 +65,20 @@ func (mr *MockStorageMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), arg0, arg1)
 }
 
+// DeleteEventsOlderThan mocks base method.
+func (m *MockStorage) DeleteEventsOlderThan(arg0 context.Context, arg1 time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEventsOlderThan", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEventsOlderThan indicates an expected call of DeleteEventsOlderThan.
+func (mr *MockStorageMockRecorder) DeleteEventsOlderThan(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEventsOlderThan", reflect.TypeOf((*MockStorage)(nil).DeleteEventsOlderThan), arg0, arg1)
+}
+
 // GetDayEvents mocks base method.
 func (m *MockStorage) GetDayEvents(arg0 context.Context, arg1 time.Time) ([]event.Event, error) {
 	m.ctrl.T.Helper()
@@ -78,6 +92,21 @@ func (m *MockStorage) GetDayEvents(arg0 context.Context, arg1 time.Time) ([]even
 func (mr *MockStorageMockRecorder) GetDayEvents(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayEvents", reflect.TypeOf((*MockStorage)(nil).GetDayEvents), arg0, arg1)
+}
+
+// GetEventsNotifyBetween mocks base method.
+func (m *MockStorage) GetEventsNotifyBetween(arg0 context.Context, arg1, arg2 time.Time) ([]event.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEventsNotifyBetween", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]event.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEventsNotifyBetween indicates an expected call of GetEventsNotifyBetween.
+func (mr *MockStorageMockRecorder) GetEventsNotifyBetween(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsNotifyBetween", reflect.TypeOf((*MockStorage)(nil).GetEventsNotifyBetween), arg0, arg1, arg2)
 }
 
 // GetMonthEvents mocks base method.
