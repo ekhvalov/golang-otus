@@ -61,10 +61,14 @@ type scheduler struct {
 	scanInterval  time.Duration // Interval of finding events that are ready to send notification about
 }
 
-func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval time.Duration) error {
+func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval time.Duration) (err error) {
 	t := time.NewTicker(interval)
 	defer func() {
 		t.Stop()
+		errClose := s.producer.Close()
+		if errClose != nil {
+			err = fmt.Errorf("%s; producer close error: %w", err, errClose)
+		}
 	}()
 	for {
 		select {
@@ -87,7 +91,8 @@ func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval ti
 						UserID:     e.UserID,
 					})
 					if err != nil {
-						return fmt.Errorf("error while put notification into a queue: %w", err)
+						err = fmt.Errorf("error while put notification into a queue: %w", err)
+						return err
 					}
 				}
 			}

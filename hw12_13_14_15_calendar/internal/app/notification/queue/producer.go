@@ -20,4 +20,5 @@ func NewErrProducer(message string) ErrProducer {
 
 type Producer interface {
 	Put(notification notification.Notification) error
+	Close() error
 }

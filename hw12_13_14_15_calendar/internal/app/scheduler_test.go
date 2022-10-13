@@ -33,7 +33,9 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 				return s
 			},
 			getProducer: func(controller *gomock.Controller) queue.Producer {
-				return queuemock.NewMockProducer(controller)
+				p := queuemock.NewMockProducer(controller)
+				p.EXPECT().Close().Return(nil)
+				return p
 			},
 			contextTimeout:   time.Millisecond * 100,
 			getEventsTimeout: time.Millisecond * 10,
@@ -52,6 +54,7 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 				p.EXPECT().
 					Put(gomock.Any()).
 					Return(errProducer)
+				p.EXPECT().Close().Return(nil)
 				return p
 			},
 			contextTimeout:   time.Millisecond * 100,
@@ -63,7 +66,9 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 				return mock.NewMockStorage(controller)
 			},
 			getProducer: func(controller *gomock.Controller) queue.Producer {
-				return queuemock.NewMockProducer(controller)
+				p := queuemock.NewMockProducer(controller)
+				p.EXPECT().Close().Return(nil)
+				return p
 			},
 			contextTimeout:   time.Millisecond * 10,
 			getEventsTimeout: time.Millisecond * 100,
@@ -108,6 +113,7 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 			}).
 			Return(nil).
 			Times(len(expectedEventsTitles))
+		producer.EXPECT().Close().Return(nil)
 		storage := mock.NewMockStorage(controller)
 		storage.EXPECT().
 			GetEventsNotifyBetween(gomock.Any(), gomock.Any(), gomock.Any()).
