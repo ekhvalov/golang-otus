@@ -7,8 +7,10 @@ require (
 	github.com/getkin/kin-openapi v0.103.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/golang/mock v1.6.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
