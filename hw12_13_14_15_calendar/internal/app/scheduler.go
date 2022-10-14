@@ -33,8 +33,8 @@ func errorsToStrings(errors []error) []string {
 }
 
 type Scheduler interface {
-	FindNotificationReadyEvents(ctx context.Context, interval time.Duration) error
-	CleanOldEvents(ctx context.Context, outDatePeriod, cleanInterval time.Duration) error
+	FindNotificationReadyEvents(ctx context.Context) error
+	CleanOldEvents(ctx context.Context, outDatePeriod time.Duration) error
 }
 
 func NewScheduler(storage event.Storage, producer queue.Producer) (Scheduler, error) {
@@ -61,8 +61,8 @@ type scheduler struct {
 	scanInterval  time.Duration // Interval of finding events that are ready to send notification about
 }
 
-func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval time.Duration) (err error) {
-	t := time.NewTicker(interval)
+func (s *scheduler) FindNotificationReadyEvents(ctx context.Context) (err error) {
+	t := time.NewTicker(s.scanInterval)
 	defer func() {
 		t.Stop()
 		errClose := s.producer.Close()
@@ -79,7 +79,7 @@ func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval ti
 			case <-ctx.Done():
 				return nil
 			case <-t.C:
-				events, err := s.storage.GetEventsNotifyBetween(ctx, time.Now(), time.Now().Add(interval))
+				events, err := s.storage.GetEventsNotifyBetween(ctx, time.Now(), time.Now().Add(s.scanInterval))
 				if err != nil {
 					return fmt.Errorf("get events error: %w", err)
 				}
@@ -100,8 +100,8 @@ func (s *scheduler) FindNotificationReadyEvents(ctx context.Context, interval ti
 	}
 }
 
-func (s *scheduler) CleanOldEvents(ctx context.Context, outDatePeriod, cleanInterval time.Duration) error {
-	t := time.NewTicker(cleanInterval)
+func (s *scheduler) CleanOldEvents(ctx context.Context, outDatePeriod time.Duration) error {
+	t := time.NewTicker(s.cleanInterval)
 	defer func() {
 		t.Stop()
 	}()
