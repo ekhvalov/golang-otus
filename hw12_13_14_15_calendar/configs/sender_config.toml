@@ -1,0 +1,9 @@
+[queue]
+type = "rabbitmq"
+
+[queue.rabbitmq]
+address = "localhost"
+port = 5672
+username = ""
+password = ""
+queue_name = "events_notifications"

@@ -98,3 +98,45 @@ func notificationToBytes(notification notification.Notification) ([]byte, error)
 	}
 	return buffer.Bytes(), nil
 }
+
+func (c *connector) consume(ctx context.Context) (<-chan notification.Notification, error) {
+	ch := make(chan notification.Notification)
+	deliveries, err := c.channel.Consume(c.queueName, "", false, false, false, false, nil)
+	if err != nil {
+		return nil, fmt.Errorf("start consuming: %w", err)
+	}
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				select {
+				case <-ctx.Done():
+					return
+				case delivery := <-deliveries:
+					n, err := bytesToNotification(delivery.Body)
+					if err != nil {
+						// TODO: handle
+					} else {
+						ch <- n
+					}
+				}
+			}
+		}
+	}()
+	return ch, nil
+}
+
+func bytesToNotification(b []byte) (notification.Notification, error) {
+	buffer := bytes.NewBuffer(b)
+	decoder := gob.NewDecoder(buffer)
+	var n notification.Notification
+	if err := decoder.Decode(&n); err != nil {
+		return n, fmt.Errorf("notification decode error: %w", err)
+	}
+	return n, nil
+}
