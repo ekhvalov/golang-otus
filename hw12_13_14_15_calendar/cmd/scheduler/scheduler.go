@@ -85,7 +85,7 @@ func run() error {
 
 func createQueueProducer(provider config.Provider) (appqueue.Producer, error) {
 	var cfg rabbitmq.ConfigRabbitMQ
-	err := provider.UnmarshalKey("queue.rabbitmq", cfg)
+	err := provider.UnmarshalKey("queue.rabbitmq", &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal ConfigRabbitMQ error: %w", err)
 	}
