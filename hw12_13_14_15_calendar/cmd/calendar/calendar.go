@@ -37,7 +37,7 @@ func init() {
 }
 
 func run() {
-	v, err := config.CreateViper(cfgFile, configEnvPrefix, config.DefaultEnvKeyReplacer) //nolint:staticcheck
+	v, err := config.CreateViper(cfgFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create config error: %w", err))
 	}

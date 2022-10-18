@@ -9,10 +9,7 @@ import (
 	"time"
 
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
-	appqueue "github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/notification/queue"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
-	configviper "github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config/viper"
 	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
 	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/hashicorp/go-multierror"
@@ -40,15 +37,12 @@ func init() {
 
 func run() error {
 	fmt.Println("Using config file:", configFile)
-	configProvider, err := configviper.NewProvider(configFile, configEnvPrefix, configviper.DefaultEnvKeyReplacer)
+	v, err := config.CreateViper(configFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
-		return fmt.Errorf("create config error: %w", err)
+		return fmt.Errorf("create viper error: %w", err)
 	}
-	queueProducer, err := createQueueProducer(configProvider)
-	if err != nil {
-		return err
-	}
-	storage := createStorage()
+	queueProducer := rabbitmq.NewProducer(config.NewRabbitMQConfig(v))
+	storage := memorystorage.New(memorystorage.UUIDProvider{})
 
 	scheduler, err := app.NewScheduler(storage, queueProducer)
 	if err != nil {
@@ -81,17 +75,4 @@ func run() error {
 		err = multierror.Append(err, e)
 	}
 	return err
-}
-
-func createQueueProducer(provider config.Provider) (appqueue.Producer, error) {
-	var cfg rabbitmq.ConfigRabbitMQ
-	err := provider.UnmarshalKey("queue.rabbitmq", &cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal ConfigRabbitMQ error: %w", err)
-	}
-	return rabbitmq.NewProducer(cfg), nil
-}
-
-func createStorage() event.Storage {
-	return memorystorage.New(memorystorage.UUIDProvider{})
 }
