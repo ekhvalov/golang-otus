@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type ConfigRabbitMQ struct {
+type Config struct {
 	Address   string
 	Port      int
 	Username  string
@@ -13,7 +13,7 @@ type ConfigRabbitMQ struct {
 	QueueName string
 }
 
-func (c ConfigRabbitMQ) GetDSN() string {
+func (c Config) GetDSN() string {
 	dsnBuilder := strings.Builder{}
 	dsnBuilder.WriteString("amqp://")
 	if c.Username != "" {

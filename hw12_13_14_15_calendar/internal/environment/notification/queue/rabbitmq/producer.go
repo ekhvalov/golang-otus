@@ -11,8 +11,8 @@ type producer struct {
 	connector *connector
 }
 
-func NewProducer(mqConf ConfigRabbitMQ) queue.Producer {
-	return &producer{connector: newConnector(mqConf.GetDSN(), mqConf.QueueName)}
+func NewProducer(config Config) queue.Producer {
+	return &producer{connector: newConnector(config.GetDSN(), config.QueueName)}
 }
 
 func (p *producer) Put(notification notification.Notification) error {
