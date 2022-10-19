@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -36,6 +37,9 @@ func run() error {
 		return fmt.Errorf("create viper error: %w", err)
 	}
 	queueConsumer := rabbitmq.NewConsumer(config.NewRabbitMQConfig(v))
+	defer func() {
+		err = queueConsumer.Close()
+	}()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
@@ -43,11 +47,25 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("consumer subscribe error: %w", err)
 	}
-	s := sender.NewSender(os.Stdout)
+	c := config.NewSenderWriterConfig(v)
+	var output io.Writer
+	if c.TargetFile == "" {
+		output = os.Stdout
+	} else {
+		file, err := os.Create(c.TargetFile)
+		if err != nil {
+			return fmt.Errorf("create file '%s' error: %w", c.TargetFile, err)
+		}
+		defer func() {
+			err = file.Close()
+		}()
+		output = file
+	}
+	s := sender.NewSender(output)
 	for notification := range notifications {
 		if err = s.Send(notification); err != nil {
 			return fmt.Errorf("send error: %w", err)
 		}
 	}
-	return nil
+	return err
 }

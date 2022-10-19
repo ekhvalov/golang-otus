@@ -19,9 +19,12 @@ services:
     image: otus-golang/calendar-sender:develop
     environment:
       SENDER_QUEUE_RABBITMQ_ADDRESS: rabbitmq
+      SENDER_SENDER_WRITER_TARGET_FILE: /tmp/writer.txt
     restart: on-failure
     depends_on:
       - rabbitmq
+    volumes:
+      - /tmp:/tmp
     command: sh -c 'sleep 5 && calendar-sender --config /etc/calendar/config.toml'
 
   rabbitmq:
@@ -33,8 +36,11 @@ services:
     working_dir: /usr/src/calendar
     volumes:
       - ../..:/usr/src/calendar
+      - /tmp:/tmp
     environment:
       TESTS_HTTP_SERVER_HOST: calendar
+      TESTS_RQBBITMQ_HOST: rabbitmq
+      TESTS_WRITER_TARGET_FILE: /tmp/writer.txt
     command: [ "go", "test", "-tags=integration", "./internal/tests/integration/..."]
 
 
