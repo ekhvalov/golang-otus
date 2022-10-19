@@ -69,7 +69,12 @@ generate:
 	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event
 	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http
 
+.Phony: up
 up:
 	cd deployments && docker-compose up -d
 
-.PHONY: build run build-img run-img version test lint generate up
+.Phony: down
+down:
+	cd deployments && docker-compose down
+
+.PHONY: build run build-img run-img version test lint generate
