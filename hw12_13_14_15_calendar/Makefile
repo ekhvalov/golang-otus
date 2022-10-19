@@ -77,4 +77,8 @@ up:
 down:
 	cd deployments && docker-compose down
 
+.Phony: integration-tests
+integration-tests:
+	cd deployments/integration-tests && docker-compose up --exit-code-from tester
+
 .PHONY: build run build-img run-img version test lint generate

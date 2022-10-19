@@ -3,8 +3,8 @@ version: "3.8"
 services:
   calendar:
     image: otus-golang/calendar:develop
-    ports:
-      - "8888:8080"
+    expose:
+      - 8080
     restart: on-failure
 
   scheduler:
@@ -22,8 +22,19 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq
+    command: sh -c 'sleep 5 && calendar-sender --config /etc/calendar/config.toml'
 
   rabbitmq:
     image: rabbitmq:3.11.1
+
+
+  tester:
+    image: golang:1.17.13
+    working_dir: /usr/src/calendar
+    volumes:
+      - ../..:/usr/src/calendar
+    environment:
+      TESTS_HTTP_SERVER_HOST: calendar
+    command: [ "go", "test", "-tags=integration", "./internal/tests/integration/..."]
 
 
