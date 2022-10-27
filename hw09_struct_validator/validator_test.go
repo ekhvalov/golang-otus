@@ -2,8 +2,11 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -42,10 +45,49 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in:          nil,
+			expectedErr: fmt.Errorf("wrong validated type; expected struct, got: <nil>"),
 		},
-		// ...
-		// Place your code here.
+		{
+			in:          10,
+			expectedErr: fmt.Errorf("wrong validated type; expected struct, got: int"),
+		},
+		{
+			in:          make([]string, 0),
+			expectedErr: fmt.Errorf("wrong validated type; expected struct, got: []string"),
+		},
+		{
+			in:          Token{},
+			expectedErr: nil,
+		},
+		{
+			in: User{
+				ID:     "012345678901234567890123456789012345",
+				Age:    28,
+				Role:   "admin",
+				Email:  "mail@example.com",
+				Phones: []string{"+0123456789", "+0123456789"},
+				meta:   nil,
+			},
+			expectedErr: nil,
+		},
+		{
+			in: User{Age: 100},
+			expectedErr: ValidationErrors{
+				{
+					Field: "ID",
+					Err:   fmt.Errorf("length mismatched; expected 36, got 0"),
+				},
+			},
+		},
+		{
+			in:          App{Version: "0.1.1"},
+			expectedErr: nil,
+		},
+		{
+			in:          Response{Code: 200},
+			expectedErr: nil,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,7 +95,13 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
+			err := Validate(tt.in)
+			if tt.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				errors.Is(tt.expectedErr, err)
+			}
 			_ = tt
 		})
 	}
