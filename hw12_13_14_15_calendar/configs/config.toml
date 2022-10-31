@@ -7,3 +7,10 @@ level = "INFO"
 
 [storage]
 type = "memory"
+
+[storage.pgsql]
+host = "localhost"
+port = "5432"
+username = "postgres"
+password = ""
+database = "postgres"

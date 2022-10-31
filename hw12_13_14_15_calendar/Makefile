@@ -6,6 +6,7 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o "./bin/migrate" -ldflags "$(LDFLAGS)" ./cmd/migrate
 
 run: build
 	$(BIN) --config ./configs/config.toml
