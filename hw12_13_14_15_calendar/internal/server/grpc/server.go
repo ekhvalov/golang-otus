@@ -18,7 +18,7 @@ import (
 )
 
 type Server interface {
-	Start(address string) error
+	ListenAndServe(address string) error
 	Shutdown(context context.Context) error
 }
 
@@ -123,7 +123,7 @@ func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest)
 	return &grpcapi.GetEventsResponse{Events: e}, nil
 }
 
-func (s *server) Start(address string) error {
+func (s *server) ListenAndServe(address string) error {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return fmt.Errorf("listen address '%s' error: %w", address, err)

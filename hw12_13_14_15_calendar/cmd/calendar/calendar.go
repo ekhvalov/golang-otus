@@ -87,7 +87,7 @@ func run() {
 	// TODO: Run http and grpc
 	go func(wg *sync.WaitGroup) {
 		srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
-		if err := httpServer.Start(srvAddr); err != nil {
+		if err := httpServer.ListenAndServe(srvAddr); err != nil {
 			logg.Error("failed to start http server: " + err.Error())
 			cancel()
 		}
@@ -95,7 +95,7 @@ func run() {
 	}(&wg)
 	go func(wg *sync.WaitGroup) {
 		srvAddr := fmt.Sprintf("%s:%d", cfg.GRPC.Address, cfg.GRPC.Port)
-		if err := grpcServer.Start(srvAddr); err != nil {
+		if err := grpcServer.ListenAndServe(srvAddr); err != nil {
 			logg.Error("failed to start grpc server: " + err.Error())
 			cancel()
 		}

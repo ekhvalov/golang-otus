@@ -19,7 +19,7 @@ import (
 )
 
 type Server interface {
-	Start(address string) error
+	ListenAndServe(address string) error
 	Shutdown(context context.Context) error
 }
 
@@ -53,7 +53,7 @@ func NewServer(app app.Application, logger Logger) Server {
 	}
 }
 
-func (s *server) Start(address string) error {
+func (s *server) ListenAndServe(address string) error {
 	s.logger.Info(fmt.Sprintf("listen: %s", address))
 	s.s.Addr = address
 	return s.s.ListenAndServe()
