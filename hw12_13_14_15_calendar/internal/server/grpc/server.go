@@ -50,7 +50,7 @@ func (s *server) CreateEvent(
 		Title:        request.GetTitle(),
 		DateTime:     time.Unix(request.GetDate(), 0),
 		Duration:     time.Duration(request.GetDuration()) * time.Minute,
-		UserID:       "10",
+		UserID:       request.GetUserId(),
 		Description:  request.GetDescription(),
 		NotifyBefore: time.Duration(request.GetNotifyBefore()) * time.Minute,
 	}
@@ -67,7 +67,7 @@ func (s *server) UpdateEvent(_ context.Context, request *grpcapi.UpdateEventRequ
 		Title:        request.GetTitle(),
 		DateTime:     time.Unix(request.GetDate(), 0),
 		Duration:     time.Duration(request.GetDuration()) * time.Minute,
-		UserID:       "10",
+		UserID:       request.GetUserId(),
 		Description:  request.GetDescription(),
 		NotifyBefore: time.Duration(request.GetNotifyBefore()) * time.Minute,
 	}
@@ -118,6 +118,7 @@ func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest)
 			Duration:     int32(ev.Duration / time.Minute),
 			Description:  ev.Description,
 			NotifyBefore: int32(ev.NotifyBefore / time.Minute),
+			UserId:       ev.UserID,
 		}
 	}
 	return &grpcapi.GetEventsResponse{Events: e}, nil

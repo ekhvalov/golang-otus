@@ -16,6 +16,7 @@ message CreateEventRequest {
   int32 duration = 3; // Duration of an event (in minutes)
   string description = 4;
   int32 notify_before = 5;
+  string user_id = 6;
 }
 
 message CreateEventResponse {
@@ -29,6 +30,7 @@ message UpdateEventRequest {
   int32 duration = 4; // Duration of an event (in minutes)
   string description = 5;
   int32 notify_before = 6;
+  string user_id = 7;
 }
 
 message DeleteEventRequest {
@@ -57,6 +59,7 @@ message Event {
   int32 duration = 4; // Duration of an event (in minutes)
   string description = 5;
   int32 notify_before = 6;
+  string user_id = 7;
 }
 
 message Empty {}
