@@ -84,23 +84,22 @@ func run() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	// TODO: Run http and grpc
-	go func(wg *sync.WaitGroup) {
+	go func() {
 		srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
 		if err := httpServer.ListenAndServe(srvAddr); err != nil {
 			logg.Error("failed to start http server: " + err.Error())
 			cancel()
 		}
 		wg.Done()
-	}(&wg)
-	go func(wg *sync.WaitGroup) {
+	}()
+	go func() {
 		srvAddr := fmt.Sprintf("%s:%d", cfg.GRPC.Address, cfg.GRPC.Port)
 		if err := grpcServer.ListenAndServe(srvAddr); err != nil {
 			logg.Error("failed to start grpc server: " + err.Error())
 			cancel()
 		}
 		wg.Done()
-	}(&wg)
+	}()
 
 	logg.Info("calendar is running...")
 	wg.Wait()
