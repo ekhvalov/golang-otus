@@ -11,11 +11,11 @@ service Calendar {
 }
 
 message CreateEventRequest {
-  string title = 2;
-  int64 date = 3; // Event start date (unix timestamp)
-  int32 duration = 4; // Duration of an event (in minutes)
-  string description = 5;
-  int32 notify_before = 6;
+  string title = 1;
+  int64 date = 2; // Event start date (unix timestamp)
+  int32 duration = 3; // Duration of an event (in minutes)
+  string description = 4;
+  int32 notify_before = 5;
 }
 
 message CreateEventReply {
