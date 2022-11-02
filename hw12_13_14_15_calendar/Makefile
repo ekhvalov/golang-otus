@@ -6,6 +6,7 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o "./bin/migrate" -ldflags "$(LDFLAGS)" ./cmd/migrate
 
 run: build
 	$(BIN) --config ./configs/config.toml
@@ -32,10 +33,10 @@ lint: install-lint-deps
 	golangci-lint run ./...
 
 generate:
-	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/app
-	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command
-	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event
-	go generate github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command
+  go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event
+  go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http
 
 
 .PHONY: build run build-img run-img version test lint generate

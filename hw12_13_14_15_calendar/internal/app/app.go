@@ -8,9 +8,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/query"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/query"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 )
 
 type Application interface {
