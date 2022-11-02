@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/domain/event"
 )
 
 type UpdateEventRequest struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	pgsqlstorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/pgsql"
+	pgsqlstorage "github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/storage/pgsql"
 	"github.com/spf13/viper"
 )
 

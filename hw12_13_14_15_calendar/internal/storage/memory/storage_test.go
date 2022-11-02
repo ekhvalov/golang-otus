@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
-	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/domain/event"
+	memorystorage "github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/stretchr/testify/require"
 )
 
