@@ -45,7 +45,7 @@ type server struct {
 func (s *server) CreateEvent(
 	_ context.Context,
 	request *grpcapi.CreateEventRequest,
-) (*grpcapi.CreateEventReply, error) {
+) (*grpcapi.CreateEventResponse, error) {
 	createEventRequest := command.CreateEventRequest{
 		Title:        request.GetTitle(),
 		DateTime:     time.Unix(request.GetDate(), 0),
@@ -58,14 +58,7 @@ func (s *server) CreateEvent(
 	if err != nil {
 		return nil, fmt.Errorf("create event error: %w", err)
 	}
-	return &grpcapi.CreateEventReply{
-		Id:           newEvent.Event.ID,
-		Title:        newEvent.Event.Title,
-		Date:         newEvent.Event.DateTime.Unix(),
-		Duration:     int32(newEvent.Event.Duration / time.Minute),
-		Description:  newEvent.Event.Description,
-		NotifyBefore: int32(newEvent.Event.NotifyBefore / time.Minute),
-	}, nil
+	return &grpcapi.CreateEventResponse{Id: newEvent.Event.ID}, nil
 }
 
 func (s *server) UpdateEvent(_ context.Context, request *grpcapi.UpdateEventRequest) (*grpcapi.Empty, error) {
@@ -92,7 +85,7 @@ func (s *server) DeleteEvent(_ context.Context, request *grpcapi.DeleteEventRequ
 	return &grpcapi.Empty{}, nil
 }
 
-func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest) (*grpcapi.GetEventsReply, error) {
+func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest) (*grpcapi.GetEventsResponse, error) {
 	var events []event.Event
 	switch request.GetPeriod() {
 	case grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_UNSPECIFIED:
@@ -127,7 +120,7 @@ func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest)
 			NotifyBefore: int32(ev.NotifyBefore / time.Minute),
 		}
 	}
-	return &grpcapi.GetEventsReply{Events: e}, nil
+	return &grpcapi.GetEventsResponse{Events: e}, nil
 }
 
 func (s *server) Start(address string) error {

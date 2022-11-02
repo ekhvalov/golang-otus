@@ -21,7 +21,7 @@ func Test_server_CreateEvent(t *testing.T) {
 	tests := map[string]struct {
 		getApp  func(controller *gomock.Controller) app.Application
 		request *grpcapi.CreateEventRequest
-		want    *grpcapi.CreateEventReply
+		want    *grpcapi.CreateEventResponse
 		wantErr bool
 	}{
 		"when error occurred then should return error": {
@@ -34,7 +34,7 @@ func Test_server_CreateEvent(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		"when no error occurred then should return CreateEventReply": {
+		"when no error occurred then should return CreateEventResponse": {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
@@ -51,14 +51,7 @@ func Test_server_CreateEvent(t *testing.T) {
 				return a
 			},
 			wantErr: false,
-			want: &grpcapi.CreateEventReply{
-				Id:           "10",
-				Title:        "Title",
-				Date:         eventTime.Unix(),
-				Duration:     30,
-				Description:  "Description",
-				NotifyBefore: 20,
-			},
+			want:    &grpcapi.CreateEventResponse{Id: "10"},
 		},
 	}
 	for testName, tt := range tests {
@@ -70,15 +63,15 @@ func Test_server_CreateEvent(t *testing.T) {
 			require.NoError(t, err)
 			srv := s.(grpcapi.CalendarServer)
 
-			createEventReply, err := srv.CreateEvent(context.Background(), tt.request)
+			createEventResponse, err := srv.CreateEvent(context.Background(), tt.request)
 
 			if tt.wantErr {
 				require.Error(t, err)
-				require.Nil(t, createEventReply)
+				require.Nil(t, createEventResponse)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tt.want, createEventReply)
+			require.Equal(t, tt.want, createEventResponse)
 		})
 	}
 }
@@ -119,15 +112,15 @@ func Test_server_UpdateEvent(t *testing.T) {
 			require.NoError(t, err)
 			srv := s.(grpcapi.CalendarServer)
 
-			updateEventReply, err := srv.UpdateEvent(context.Background(), tt.request)
+			updateEventResponse, err := srv.UpdateEvent(context.Background(), tt.request)
 
 			if tt.wantErr {
 				require.Error(t, err)
-				require.Nil(t, updateEventReply)
+				require.Nil(t, updateEventResponse)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, &grpcapi.Empty{}, updateEventReply)
+			require.Equal(t, &grpcapi.Empty{}, updateEventResponse)
 		})
 	}
 }
@@ -168,15 +161,15 @@ func Test_server_DeleteEvent(t *testing.T) {
 			require.NoError(t, err)
 			srv := s.(grpcapi.CalendarServer)
 
-			deleteEventReply, err := srv.DeleteEvent(context.Background(), tt.request)
+			deleteEventResponse, err := srv.DeleteEvent(context.Background(), tt.request)
 
 			if tt.wantErr {
 				require.Error(t, err)
-				require.Nil(t, deleteEventReply)
+				require.Nil(t, deleteEventResponse)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, &grpcapi.Empty{}, deleteEventReply)
+			require.Equal(t, &grpcapi.Empty{}, deleteEventResponse)
 		})
 	}
 }
@@ -186,7 +179,7 @@ func Test_server_GetEvents(t *testing.T) {
 		getApp  func(controller *gomock.Controller) app.Application
 		request *grpcapi.GetEventsRequest
 		wantErr bool
-		want    *grpcapi.GetEventsReply
+		want    *grpcapi.GetEventsResponse
 	}{
 		"when error occurred then should return error": {
 			getApp: func(controller *gomock.Controller) app.Application {
@@ -209,9 +202,9 @@ func Test_server_GetEvents(t *testing.T) {
 				Period: grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_UNSPECIFIED,
 			},
 			wantErr: true,
-			want:    &grpcapi.GetEventsReply{Events: make([]*grpcapi.Event, 0)},
+			want:    &grpcapi.GetEventsResponse{Events: make([]*grpcapi.Event, 0)},
 		},
-		"when no error occurred then should return GetEventsReply": {
+		"when no error occurred then should return GetEventsResponse": {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
@@ -223,7 +216,7 @@ func Test_server_GetEvents(t *testing.T) {
 				Period: grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_DAY,
 			},
 			wantErr: false,
-			want:    &grpcapi.GetEventsReply{Events: make([]*grpcapi.Event, 0)},
+			want:    &grpcapi.GetEventsResponse{Events: make([]*grpcapi.Event, 0)},
 		},
 	}
 	for testName, tt := range tests {
@@ -235,15 +228,15 @@ func Test_server_GetEvents(t *testing.T) {
 			require.NoError(t, err)
 			srv := s.(grpcapi.CalendarServer)
 
-			getEventReply, err := srv.GetEvents(context.Background(), tt.request)
+			getEventResponse, err := srv.GetEvents(context.Background(), tt.request)
 
 			if tt.wantErr {
 				require.Error(t, err)
-				require.Nil(t, getEventReply)
+				require.Nil(t, getEventResponse)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, &grpcapi.GetEventsReply{Events: make([]*grpcapi.Event, 0)}, getEventReply)
+			require.Equal(t, &grpcapi.GetEventsResponse{Events: make([]*grpcapi.Event, 0)}, getEventResponse)
 		})
 	}
 }
