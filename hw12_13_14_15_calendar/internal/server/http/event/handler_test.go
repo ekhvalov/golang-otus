@@ -27,7 +27,7 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					GetDayEvents(gomock.Any()).
+					GetDayEvents(gomock.Any(), gomock.Any()).
 					Return(nil, domainevent.NewErrStorage("storage error"))
 				return a
 			},
@@ -38,7 +38,7 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					GetDayEvents(gomock.Any()).
+					GetDayEvents(gomock.Any(), gomock.Any()).
 					Return(&query.GetDayEventsResponse{}, nil)
 				return a
 			},
@@ -49,7 +49,7 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					GetWeekEvents(gomock.Any()).
+					GetWeekEvents(gomock.Any(), gomock.Any()).
 					Return(nil, domainevent.NewErrStorage("storage error"))
 				return a
 			},
@@ -60,7 +60,7 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					GetWeekEvents(gomock.Any()).
+					GetWeekEvents(gomock.Any(), gomock.Any()).
 					Return(&query.GetWeekEventsResponse{}, nil)
 				return a
 			},
@@ -71,7 +71,7 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					GetMonthEvents(gomock.Any()).
+					GetMonthEvents(gomock.Any(), gomock.Any()).
 					Return(nil, domainevent.NewErrStorage("storage error"))
 				return a
 			},
@@ -82,7 +82,7 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					GetMonthEvents(gomock.Any()).
+					GetMonthEvents(gomock.Any(), gomock.Any()).
 					Return(&query.GetMonthEventsResponse{}, nil)
 				return a
 			},
@@ -94,10 +94,11 @@ func Test_eventHandler_GetEvents(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
+			request := httptest.NewRequest(http.MethodGet, "https://example.com", nil)
 			responseRecorder := httptest.NewRecorder()
 			h := event.NewEventHandler(tt.getApp(controller), mock.NewMockLogger(controller))
 
-			h.GetEvents(responseRecorder, nil, tt.params)
+			h.GetEvents(responseRecorder, request, tt.params)
 
 			require.Equal(t, tt.wantCode, responseRecorder.Result().StatusCode) //nolint:bodyclose
 		})
@@ -134,7 +135,7 @@ func Test_eventHandler_PostEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					CreateEvent(gomock.Any()).
+					CreateEvent(gomock.Any(), gomock.Any()).
 					Return(&command.CreateEventResponse{Event: domainevent.Event{}}, nil)
 				return a
 			},
@@ -148,7 +149,7 @@ func Test_eventHandler_PostEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					CreateEvent(gomock.Any()).
+					CreateEvent(gomock.Any(), gomock.Any()).
 					Return(nil, domainevent.ErrDateBusy)
 				return a
 			},
@@ -162,7 +163,7 @@ func Test_eventHandler_PostEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					CreateEvent(gomock.Any()).
+					CreateEvent(gomock.Any(), gomock.Any()).
 					Return(nil, command.ErrValidate{})
 				return a
 			},
@@ -219,7 +220,7 @@ func Test_eventHandler_PutEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					UpdateEvent(gomock.Any()).
+					UpdateEvent(gomock.Any(), gomock.Any()).
 					Return(nil)
 				return a
 			},
@@ -233,7 +234,7 @@ func Test_eventHandler_PutEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					UpdateEvent(gomock.Any()).
+					UpdateEvent(gomock.Any(), gomock.Any()).
 					Return(domainevent.ErrEventNotFound)
 				return a
 			},
@@ -247,7 +248,7 @@ func Test_eventHandler_PutEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					UpdateEvent(gomock.Any()).
+					UpdateEvent(gomock.Any(), gomock.Any()).
 					Return(domainevent.ErrStorage{})
 				return a
 			},
@@ -261,7 +262,7 @@ func Test_eventHandler_PutEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					UpdateEvent(gomock.Any()).
+					UpdateEvent(gomock.Any(), gomock.Any()).
 					Return(domainevent.ErrDateBusy)
 				return a
 			},
@@ -275,7 +276,7 @@ func Test_eventHandler_PutEvents(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					UpdateEvent(gomock.Any()).
+					UpdateEvent(gomock.Any(), gomock.Any()).
 					Return(command.ErrValidate{})
 				return a
 			},
@@ -310,7 +311,7 @@ func Test_eventHandler_DeleteEventsId(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					DeleteEvent(gomock.Any()).
+					DeleteEvent(gomock.Any(), gomock.Any()).
 					Return(domainevent.ErrEventNotFound)
 				return a
 			},
@@ -320,7 +321,7 @@ func Test_eventHandler_DeleteEventsId(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					DeleteEvent(gomock.Any()).
+					DeleteEvent(gomock.Any(), gomock.Any()).
 					Return(domainevent.ErrStorage{})
 				return a
 			},
@@ -330,7 +331,7 @@ func Test_eventHandler_DeleteEventsId(t *testing.T) {
 			getApp: func(controller *gomock.Controller) app.Application {
 				a := mock.NewMockApplication(controller)
 				a.EXPECT().
-					DeleteEvent(gomock.Any()).
+					DeleteEvent(gomock.Any(), gomock.Any()).
 					Return(nil)
 				return a
 			},
