@@ -20,11 +20,6 @@ message CreateEventRequest {
 
 message CreateEventResponse {
   string id = 1;
-  string title = 2;
-  int64 date = 3; // Event start date (unix timestamp)
-  int32 duration = 4; // Duration of an event (in minutes)
-  string description = 5;
-  int32 notify_before = 6;
 }
 
 message UpdateEventRequest {
