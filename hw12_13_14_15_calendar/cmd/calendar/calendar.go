@@ -16,7 +16,7 @@ import (
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/grpc"
-  internalhttp "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http"
+	internalhttp "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
 	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
 	"github.com/spf13/cobra"

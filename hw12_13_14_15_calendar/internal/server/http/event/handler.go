@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/query"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/pkg/api/openapi"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/query"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/openapi"
 )
 
 type eventHandler struct {
