@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/migrations/pgsql" // init migrations
+	_ "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/migrations/pgsql" // init migrations
 	"github.com/hashicorp/go-multierror"
 	_ "github.com/jackc/pgx/v5/stdlib" // init pgx stdlib driver
 	"github.com/pressly/goose/v3"

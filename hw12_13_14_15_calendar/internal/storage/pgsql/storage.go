@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/jackc/pgx/v5"
 )
 

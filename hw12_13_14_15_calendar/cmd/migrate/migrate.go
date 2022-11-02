@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/environment/config"
-	pgsqlstorage "github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/storage/pgsql"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
+	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
 	"github.com/spf13/cobra"
 )
 
