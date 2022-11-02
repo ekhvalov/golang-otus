@@ -35,7 +35,7 @@ type Logger interface {
 	Error(msg string)
 }
 
-func NewServer(logger Logger, app app.Application) Server {
+func NewServer(app app.Application, logger Logger) Server {
 	eventsHandler := event.NewEventHandler(app, logger)
 
 	router := chi.NewRouter()

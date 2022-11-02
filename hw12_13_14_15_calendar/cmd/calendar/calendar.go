@@ -57,7 +57,7 @@ func run() {
 		cobra.CheckErr(err)
 	}
 
-	httpServer := internalhttp.NewServer(logg, calendar)
+	httpServer := internalhttp.NewServer(calendar, logg)
 	grpcServer, err := internalgrpc.NewServer(calendar, logg)
 	if err != nil {
 		cobra.CheckErr(err)
