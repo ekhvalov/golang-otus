@@ -33,7 +33,7 @@ lint: install-lint-deps
 	golangci-lint run ./...
 
 gen:
-	go generate github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/app/event/command
-	go generate github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/domain/event
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event
 
 .PHONY: build run build-img run-img version test lint gen
