@@ -1,26 +1,24 @@
 package app
 
 import (
-	"context"
+	"github.com/ekhvalov/otus-golang/hw12_13_14_15_calendar/internal/domain/event"
 )
 
-type App struct { // TODO
+type App struct {
+	logger  Logger
+	storage event.Storage
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Debug(msg string)
+	Info(msg string)
+	Warn(msg string)
+	Error(msg string)
 }
 
-type Storage interface { // TODO
+func New(logger Logger, storage event.Storage) *App {
+	return &App{
+		logger:  logger,
+		storage: storage,
+	}
 }
-
-func New(logger Logger, storage Storage) *App {
-	return &App{}
-}
-
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
-}
-
-// TODO

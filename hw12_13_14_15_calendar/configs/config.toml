@@ -1,5 +1,16 @@
+[http]
+address = ""
+port = 8080
+
 [logger]
 level = "INFO"
 
-# TODO
-# ...
+[storage]
+type = "memory"
+
+[storage.pgsql]
+host = "localhost"
+port = "5432"
+username = "postgres"
+password = ""
+database = "postgres"
