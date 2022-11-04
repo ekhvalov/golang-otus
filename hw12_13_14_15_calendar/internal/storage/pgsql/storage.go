@@ -15,7 +15,7 @@ type Storage struct {
 	conn *pgx.Conn
 }
 
-func NewStorage(conf Config) *Storage {
+func NewStorage(conf Config) event.Storage {
 	return &Storage{dsn: conf.GetDSN()}
 }
 
@@ -112,6 +112,22 @@ func (s *Storage) GetMonthEvents(ctx context.Context, date time.Time) ([]event.E
 	start := date.Unix()
 	end := date.AddDate(0, 1, 0).Unix()
 	return s.getEventsByTimeRange(ctx, start, end)
+}
+
+func (s *Storage) GetEventsNotifyBetween(ctx context.Context, from time.Time, to time.Time) ([]event.Event, error) {
+	return s.getEventsByTimeRange(ctx, from.Unix(), to.Unix())
+}
+
+func (s *Storage) DeleteEventsOlderThan(ctx context.Context, date time.Time) error {
+	if s.conn == nil {
+		err := s.Connect(ctx)
+		if err != nil {
+			return fmt.Errorf("database connection error: %w", err)
+		}
+	}
+	sql := `DELETE FROM events WHERE start_time < $1`
+	_, err := s.conn.Exec(ctx, sql, date.Unix())
+	return err
 }
 
 func (s *Storage) getEventsByTimeRange(ctx context.Context, start, end int64) ([]event.Event, error) {
