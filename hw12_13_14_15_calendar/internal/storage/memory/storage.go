@@ -54,7 +54,7 @@ func (s *Storage) Update(_ context.Context, eventID string, e event.Event) error
 		}
 	}
 	if _, ok := s.events[eventID]; !ok {
-		return fmt.Errorf("event with id '%s' is not exist", eventID)
+		return event.ErrEventNotFound
 	}
 	s.mu.RUnlock()
 	e.ID = eventID

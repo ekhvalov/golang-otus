@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
 	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
@@ -50,9 +52,16 @@ func run() {
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create storage error: %w", err))
 	}
-	calendar := app.New(logg, storage)
+	calendar, err := app.New(logg, storage)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
 
-	server := internalhttp.NewServer(cfg.HTTP.Address, cfg.HTTP.Port, logg, calendar)
+	httpServer := internalhttp.NewServer(calendar, logg)
+	grpcServer, err := internalgrpc.NewServer(calendar, logg)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -64,18 +73,36 @@ func run() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpServer.Shutdown(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
+		}
+		if err := grpcServer.Shutdown(ctx); err != nil {
+			logg.Error("failed to stop grpc server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	wg := sync.WaitGroup{}
+	wg.Add(2)
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
+	go func() {
+		srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
+		if err := httpServer.ListenAndServe(srvAddr); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+		wg.Done()
+	}()
+	go func() {
+		srvAddr := fmt.Sprintf("%s:%d", cfg.GRPC.Address, cfg.GRPC.Port)
+		if err := grpcServer.ListenAndServe(srvAddr); err != nil {
+			logg.Error("failed to start grpc server: " + err.Error())
+			cancel()
+		}
+		wg.Done()
+	}()
+
+	logg.Info("calendar is running...")
+	wg.Wait()
 }
 
 func getViper() (*viper.Viper, error) {

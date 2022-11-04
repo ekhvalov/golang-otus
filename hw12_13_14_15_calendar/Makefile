@@ -24,7 +24,7 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/...
+	go test -race ./internal/... ./pkg/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.0
@@ -32,8 +32,12 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-gen:
+generate:
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app
 	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command
 	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/grpc
+	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http
 
-.PHONY: build run build-img run-img version test lint gen
+
+.PHONY: build run build-img run-img version test lint generate

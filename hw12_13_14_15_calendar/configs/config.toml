@@ -2,6 +2,10 @@
 address = ""
 port = 8080
 
+[grpc]
+address = ""
+port = 8081
+
 [logger]
 level = "INFO"
 
