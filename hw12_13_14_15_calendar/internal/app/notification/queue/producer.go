@@ -2,7 +2,7 @@ package queue
 
 //go:generate mockgen -destination=./mock/producer.gen.go -package mock . Producer
 
-import "github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/notification"
+import "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
 
 // ErrProducer will be returned in case of internal storage error.
 type ErrProducer struct {

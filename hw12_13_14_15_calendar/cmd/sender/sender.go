@@ -7,11 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	appqueue "github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/notification/queue"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
-	configviper "github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config/viper"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/sender"
+	appqueue "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/notification/queue"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
+	configviper "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config/viper"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/sender"
 	"github.com/spf13/cobra"
 )
 

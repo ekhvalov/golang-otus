@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
 	"github.com/spf13/viper"
 )
 

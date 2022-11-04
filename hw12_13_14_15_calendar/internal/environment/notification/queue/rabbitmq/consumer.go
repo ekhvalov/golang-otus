@@ -3,8 +3,8 @@ package rabbitmq
 import (
 	"context"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/notification/queue"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/notification"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/notification/queue"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
 )
 
 func NewConsumer(conf ConfigRabbitMQ) queue.Consumer {

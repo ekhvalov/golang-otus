@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/notification"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
 )
 
 func NewSender(w io.Writer) notification.Sender {
