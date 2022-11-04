@@ -19,6 +19,7 @@ import (
 	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
 	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
