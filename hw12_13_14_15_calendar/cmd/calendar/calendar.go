@@ -10,14 +10,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/logger"
-	internalgrpc "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/grpc"
-	internalhttp "github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/grpc"
+	internalhttp "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
+	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
 	"github.com/spf13/cobra"
+  "github.com/spf13/viper"
 )
 
 var (
@@ -37,7 +39,7 @@ func init() {
 }
 
 func run() {
-	v, err := config.CreateViper(cfgFile, configEnvPrefix, config.DefaultEnvKeyReplacer) //nolint:staticcheck
+	v, err := config.CreateViper(cfgFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create config error: %w", err))
 	}
@@ -45,7 +47,7 @@ func run() {
 
 	logg := logger.New(cfg.Logger.Level, os.Stdout)
 
-	storage, err := createStorage(cfg.Storage)
+	storage, err := createStorage(cfg.Storage, v)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create storage error: %w", err))
 	}
@@ -54,7 +56,7 @@ func run() {
 		cobra.CheckErr(err)
 	}
 
-	httpServer := internalhttp.NewServer(logg, calendar)
+	httpServer := internalhttp.NewServer(calendar, logg)
 	grpcServer, err := internalgrpc.NewServer(calendar, logg)
 	if err != nil {
 		cobra.CheckErr(err)
@@ -81,32 +83,35 @@ func run() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	// TODO: Run http and grpc
-	go func(wg *sync.WaitGroup) {
+	go func() {
 		srvAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Address, cfg.HTTP.Port)
-		if err := httpServer.Start(srvAddr); err != nil {
+		if err := httpServer.ListenAndServe(srvAddr); err != nil {
 			logg.Error("failed to start http server: " + err.Error())
 			cancel()
 		}
 		wg.Done()
-	}(&wg)
-	go func(wg *sync.WaitGroup) {
+	}()
+	go func() {
 		srvAddr := fmt.Sprintf("%s:%d", cfg.GRPC.Address, cfg.GRPC.Port)
-		if err := grpcServer.Start(srvAddr); err != nil {
+		if err := grpcServer.ListenAndServe(srvAddr); err != nil {
 			logg.Error("failed to start grpc server: " + err.Error())
 			cancel()
 		}
 		wg.Done()
-	}(&wg)
+	}()
 
 	logg.Info("calendar is running...")
 	wg.Wait()
 }
 
-func createStorage(cfg StorageConf) (event.Storage, error) {
+
+func createStorage(cfg StorageConf, v *viper.Viper) (event.Storage, error) {
 	switch strings.ToLower(cfg.Type) {
 	case "memory":
 		return memorystorage.New(memorystorage.UUIDProvider{}), nil
+	case "pgsql":
+		conf := config.CreatePgsqlConfig(v)
+		return pgsqlstorage.NewStorage(conf), nil
 	default:
 		return nil, fmt.Errorf("undefined storage type: %s", cfg.Type)
 	}

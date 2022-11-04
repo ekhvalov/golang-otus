@@ -4,27 +4,23 @@ package event;
 option go_package = "./;grpc";
 
 service Calendar {
-  rpc CreateEvent(CreateEventRequest) returns (CreateEventReply) {}
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {}
   rpc UpdateEvent(UpdateEventRequest) returns (Empty) {}
   rpc DeleteEvent(DeleteEventRequest) returns (Empty) {}
-  rpc GetEvents(GetEventsRequest) returns (GetEventsReply) {}
+  rpc GetEvents(GetEventsRequest) returns (GetEventsResponse) {}
 }
 
 message CreateEventRequest {
-  string title = 2;
-  int64 date = 3; // Event start date (unix timestamp)
-  int32 duration = 4; // Duration of an event (in minutes)
-  string description = 5;
-  int32 notify_before = 6;
+  string title = 1;
+  int64 date = 2; // Event start date (unix timestamp)
+  int32 duration = 3; // Duration of an event (in minutes)
+  string description = 4;
+  int32 notify_before = 5;
+  string user_id = 6;
 }
 
-message CreateEventReply {
+message CreateEventResponse {
   string id = 1;
-  string title = 2;
-  int64 date = 3; // Event start date (unix timestamp)
-  int32 duration = 4; // Duration of an event (in minutes)
-  string description = 5;
-  int32 notify_before = 6;
 }
 
 message UpdateEventRequest {
@@ -34,6 +30,7 @@ message UpdateEventRequest {
   int32 duration = 4; // Duration of an event (in minutes)
   string description = 5;
   int32 notify_before = 6;
+  string user_id = 7;
 }
 
 message DeleteEventRequest {
@@ -51,7 +48,7 @@ message GetEventsRequest {
   int64 date = 2; // Period start (unix timestamp)
 }
 
-message GetEventsReply {
+message GetEventsResponse {
   repeated Event events = 1;
 }
 
@@ -62,6 +59,7 @@ message Event {
   int32 duration = 4; // Duration of an event (in minutes)
   string description = 5;
   int32 notify_before = 6;
+  string user_id = 7;
 }
 
 message Empty {}

@@ -14,7 +14,6 @@ func init() {
 	DefaultEnvKeyReplacer = strings.NewReplacer(".", "_")
 }
 
-// Deprecated: CreateViper is deprecated use configviper.NewProvider instead.
 func CreateViper(configFile, envPrefix string, envKeyReplacer *strings.Replacer) (*viper.Viper, error) {
 	v := viper.New()
 	if envPrefix != "" {
