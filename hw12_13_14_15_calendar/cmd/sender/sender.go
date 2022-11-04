@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/sender"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/sender"
 	"github.com/spf13/cobra"
 )
 

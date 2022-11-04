@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/pkg/api/openapi"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/openapi"
 	"github.com/stretchr/testify/require"
 )
 

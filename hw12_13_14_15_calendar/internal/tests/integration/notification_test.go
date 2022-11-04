@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/notification"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/require"
 )

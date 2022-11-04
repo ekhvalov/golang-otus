@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/config"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
-	memorystorage "github.com/ekhvalov/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
+	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 )

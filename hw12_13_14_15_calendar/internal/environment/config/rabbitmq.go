@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
 	"github.com/spf13/viper"
 )
 
