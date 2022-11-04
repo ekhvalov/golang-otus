@@ -19,7 +19,7 @@ import (
 	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
 	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
 	"github.com/spf13/cobra"
-  "github.com/spf13/viper"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -103,7 +103,6 @@ func run() {
 	logg.Info("calendar is running...")
 	wg.Wait()
 }
-
 
 func createStorage(cfg StorageConf, v *viper.Viper) (event.Storage, error) {
 	switch strings.ToLower(cfg.Type) {
