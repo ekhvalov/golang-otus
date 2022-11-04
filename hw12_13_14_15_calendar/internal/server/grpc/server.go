@@ -9,16 +9,16 @@ import (
 	"net"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/query"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
-	grpcapi "github.com/ekhvalov/hw12_13_14_15_calendar/pkg/api/grpc"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/query"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
+	grpcapi "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/grpc"
 	"google.golang.org/grpc"
 )
 
 type Server interface {
-	Start(address string) error
+	ListenAndServe(address string) error
 	Shutdown(context context.Context) error
 }
 
@@ -43,74 +43,67 @@ type server struct {
 }
 
 func (s *server) CreateEvent(
-	_ context.Context,
+	ctx context.Context,
 	request *grpcapi.CreateEventRequest,
-) (*grpcapi.CreateEventReply, error) {
+) (*grpcapi.CreateEventResponse, error) {
 	createEventRequest := command.CreateEventRequest{
 		Title:        request.GetTitle(),
 		DateTime:     time.Unix(request.GetDate(), 0),
 		Duration:     time.Duration(request.GetDuration()) * time.Minute,
-		UserID:       "10",
+		UserID:       request.GetUserId(),
 		Description:  request.GetDescription(),
 		NotifyBefore: time.Duration(request.GetNotifyBefore()) * time.Minute,
 	}
-	newEvent, err := s.application.CreateEvent(createEventRequest)
+	newEvent, err := s.application.CreateEvent(ctx, createEventRequest)
 	if err != nil {
 		return nil, fmt.Errorf("create event error: %w", err)
 	}
-	return &grpcapi.CreateEventReply{
-		Id:           newEvent.Event.ID,
-		Title:        newEvent.Event.Title,
-		Date:         newEvent.Event.DateTime.Unix(),
-		Duration:     int32(newEvent.Event.Duration / time.Minute),
-		Description:  newEvent.Event.Description,
-		NotifyBefore: int32(newEvent.Event.NotifyBefore / time.Minute),
-	}, nil
+	return &grpcapi.CreateEventResponse{Id: newEvent.Event.ID}, nil
 }
 
-func (s *server) UpdateEvent(_ context.Context, request *grpcapi.UpdateEventRequest) (*grpcapi.Empty, error) {
+func (s *server) UpdateEvent(ctx context.Context, request *grpcapi.UpdateEventRequest) (*grpcapi.Empty, error) {
 	updateEventRequest := command.UpdateEventRequest{
 		ID:           request.GetId(),
 		Title:        request.GetTitle(),
 		DateTime:     time.Unix(request.GetDate(), 0),
 		Duration:     time.Duration(request.GetDuration()) * time.Minute,
-		UserID:       "10",
+		UserID:       request.GetUserId(),
 		Description:  request.GetDescription(),
 		NotifyBefore: time.Duration(request.GetNotifyBefore()) * time.Minute,
 	}
-	if err := s.application.UpdateEvent(updateEventRequest); err != nil {
+	if err := s.application.UpdateEvent(ctx, updateEventRequest); err != nil {
 		return nil, fmt.Errorf("update event error: %w", err)
 	}
 	return &grpcapi.Empty{}, nil
 }
 
-func (s *server) DeleteEvent(_ context.Context, request *grpcapi.DeleteEventRequest) (*grpcapi.Empty, error) {
+func (s *server) DeleteEvent(ctx context.Context, request *grpcapi.DeleteEventRequest) (*grpcapi.Empty, error) {
 	deleteEventRequest := command.DeleteEventRequest{ID: request.GetId()}
-	if err := s.application.DeleteEvent(deleteEventRequest); err != nil {
+	if err := s.application.DeleteEvent(ctx, deleteEventRequest); err != nil {
 		return nil, fmt.Errorf("delete event error: %w", err)
 	}
 	return &grpcapi.Empty{}, nil
 }
 
-func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest) (*grpcapi.GetEventsReply, error) {
+func (s *server) GetEvents(ctx context.Context, request *grpcapi.GetEventsRequest) (*grpcapi.GetEventsResponse, error) {
 	var events []event.Event
 	switch request.GetPeriod() {
 	case grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_UNSPECIFIED:
 		return nil, fmt.Errorf("get events period is unspecified")
 	case grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_DAY:
-		response, err := s.application.GetDayEvents(query.GetDayEventsRequest{Date: time.Unix(request.GetDate(), 0)})
+		response, err := s.application.GetDayEvents(ctx, query.GetDayEventsRequest{Date: time.Unix(request.GetDate(), 0)})
 		if err != nil {
 			return nil, fmt.Errorf("get day events error: %w", err)
 		}
 		events = response.Events
 	case grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_WEEK:
-		response, err := s.application.GetWeekEvents(query.GetWeekEventsRequest{Date: time.Unix(request.GetDate(), 0)})
+		response, err := s.application.GetWeekEvents(ctx, query.GetWeekEventsRequest{Date: time.Unix(request.GetDate(), 0)})
 		if err != nil {
 			return nil, fmt.Errorf("get week events error: %w", err)
 		}
 		events = response.Events
 	case grpcapi.GetEventsRequest_GET_EVENTS_PERIOD_MONTH:
-		response, err := s.application.GetMonthEvents(query.GetMonthEventsRequest{Date: time.Unix(request.GetDate(), 0)})
+		response, err := s.application.GetMonthEvents(ctx, query.GetMonthEventsRequest{Date: time.Unix(request.GetDate(), 0)})
 		if err != nil {
 			return nil, fmt.Errorf("get month events error: %w", err)
 		}
@@ -125,12 +118,13 @@ func (s *server) GetEvents(_ context.Context, request *grpcapi.GetEventsRequest)
 			Duration:     int32(ev.Duration / time.Minute),
 			Description:  ev.Description,
 			NotifyBefore: int32(ev.NotifyBefore / time.Minute),
+			UserId:       ev.UserID,
 		}
 	}
-	return &grpcapi.GetEventsReply{Events: e}, nil
+	return &grpcapi.GetEventsResponse{Events: e}, nil
 }
 
-func (s *server) Start(address string) error {
+func (s *server) ListenAndServe(address string) error {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return fmt.Errorf("listen address '%s' error: %w", address, err)

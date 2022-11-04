@@ -8,18 +8,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/command"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app/event/query"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/command"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/event/query"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 )
 
 type Application interface {
-	CreateEvent(request command.CreateEventRequest) (*command.CreateEventResponse, error)
-	UpdateEvent(request command.UpdateEventRequest) error
-	DeleteEvent(request command.DeleteEventRequest) error
-	GetDayEvents(request query.GetDayEventsRequest) (*query.GetDayEventsResponse, error)
-	GetWeekEvents(request query.GetWeekEventsRequest) (*query.GetWeekEventsResponse, error)
-	GetMonthEvents(request query.GetMonthEventsRequest) (*query.GetMonthEventsResponse, error)
+	CreateEvent(ctx context.Context, request command.CreateEventRequest) (*command.CreateEventResponse, error)
+	UpdateEvent(ctx context.Context, request command.UpdateEventRequest) error
+	DeleteEvent(ctx context.Context, request command.DeleteEventRequest) error
+	GetDayEvents(ctx context.Context, request query.GetDayEventsRequest) (*query.GetDayEventsResponse, error)
+	GetWeekEvents(ctx context.Context, request query.GetWeekEventsRequest) (*query.GetWeekEventsResponse, error)
+	GetMonthEvents(ctx context.Context, request query.GetMonthEventsRequest) (*query.GetMonthEventsResponse, error)
 }
 
 type app struct {
@@ -75,8 +75,11 @@ func New(logger Logger, storage event.Storage) (Application, error) {
 	}, nil
 }
 
-func (a *app) CreateEvent(request command.CreateEventRequest) (*command.CreateEventResponse, error) {
-	response, err := a.createHandler.Handle(context.Background(), request)
+func (a *app) CreateEvent(
+	ctx context.Context,
+	request command.CreateEventRequest,
+) (*command.CreateEventResponse, error) {
+	response, err := a.createHandler.Handle(ctx, request)
 	if err != nil {
 		if errors.Is(err, event.ErrStorage{}) {
 			a.logger.Error(fmt.Sprintf("create event handler storage error: %s", err))
@@ -86,8 +89,8 @@ func (a *app) CreateEvent(request command.CreateEventRequest) (*command.CreateEv
 	return response, nil
 }
 
-func (a *app) UpdateEvent(request command.UpdateEventRequest) error {
-	err := a.updateHandler.Handle(context.Background(), request)
+func (a *app) UpdateEvent(ctx context.Context, request command.UpdateEventRequest) error {
+	err := a.updateHandler.Handle(ctx, request)
 	if err != nil {
 		if errors.Is(err, event.ErrStorage{}) {
 			a.logger.Error(fmt.Sprintf("update event handler storage error: %s", err))
@@ -97,8 +100,8 @@ func (a *app) UpdateEvent(request command.UpdateEventRequest) error {
 	return nil
 }
 
-func (a *app) DeleteEvent(request command.DeleteEventRequest) error {
-	err := a.deleteHandler.Handle(context.Background(), request)
+func (a *app) DeleteEvent(ctx context.Context, request command.DeleteEventRequest) error {
+	err := a.deleteHandler.Handle(ctx, request)
 	if err != nil {
 		if errors.Is(err, event.ErrStorage{}) {
 			a.logger.Error(fmt.Sprintf("delete event handler storage error: %s", err))
@@ -108,8 +111,11 @@ func (a *app) DeleteEvent(request command.DeleteEventRequest) error {
 	return nil
 }
 
-func (a *app) GetDayEvents(request query.GetDayEventsRequest) (*query.GetDayEventsResponse, error) {
-	response, err := a.getDayHandler.Handle(context.Background(), request)
+func (a *app) GetDayEvents(
+	ctx context.Context,
+	request query.GetDayEventsRequest,
+) (*query.GetDayEventsResponse, error) {
+	response, err := a.getDayHandler.Handle(ctx, request)
 	if err != nil {
 		if errors.Is(err, event.ErrStorage{}) {
 			a.logger.Error(fmt.Sprintf("get day events handler storage error: %s", err))
@@ -119,8 +125,11 @@ func (a *app) GetDayEvents(request query.GetDayEventsRequest) (*query.GetDayEven
 	return response, nil
 }
 
-func (a *app) GetWeekEvents(request query.GetWeekEventsRequest) (*query.GetWeekEventsResponse, error) {
-	response, err := a.getWeekHandler.Handle(context.Background(), request)
+func (a *app) GetWeekEvents(
+	ctx context.Context,
+	request query.GetWeekEventsRequest,
+) (*query.GetWeekEventsResponse, error) {
+	response, err := a.getWeekHandler.Handle(ctx, request)
 	if err != nil {
 		if errors.Is(err, event.ErrStorage{}) {
 			a.logger.Error(fmt.Sprintf("get week events handler storage error: %s", err))
@@ -130,8 +139,11 @@ func (a *app) GetWeekEvents(request query.GetWeekEventsRequest) (*query.GetWeekE
 	return response, nil
 }
 
-func (a *app) GetMonthEvents(request query.GetMonthEventsRequest) (*query.GetMonthEventsResponse, error) {
-	response, err := a.getMonthHandler.Handle(context.Background(), request)
+func (a *app) GetMonthEvents(
+	ctx context.Context,
+	request query.GetMonthEventsRequest,
+) (*query.GetMonthEventsResponse, error) {
+	response, err := a.getMonthHandler.Handle(ctx, request)
 	if err != nil {
 		if errors.Is(err, event.ErrStorage{}) {
 			a.logger.Error(fmt.Sprintf("get month events handler storage error: %s", err))

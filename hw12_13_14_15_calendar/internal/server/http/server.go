@@ -12,14 +12,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/app"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/internal/server/http/event"
-	"github.com/ekhvalov/hw12_13_14_15_calendar/pkg/api/openapi"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http/event"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/openapi"
 	"github.com/go-chi/chi/v5"
 )
 
 type Server interface {
-	Start(address string) error
+	ListenAndServe(address string) error
 	Shutdown(context context.Context) error
 }
 
@@ -35,7 +35,7 @@ type Logger interface {
 	Error(msg string)
 }
 
-func NewServer(logger Logger, app app.Application) Server {
+func NewServer(app app.Application, logger Logger) Server {
 	eventsHandler := event.NewEventHandler(app, logger)
 
 	router := chi.NewRouter()
@@ -53,7 +53,7 @@ func NewServer(logger Logger, app app.Application) Server {
 	}
 }
 
-func (s *server) Start(address string) error {
+func (s *server) ListenAndServe(address string) error {
 	s.logger.Info(fmt.Sprintf("listen: %s", address))
 	s.s.Addr = address
 	return s.s.ListenAndServe()
