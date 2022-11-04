@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -40,7 +39,7 @@ func init() {
 }
 
 func run() {
-	v, err := getViper()
+	v, err := config.CreateViper(cfgFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create config error: %w", err))
 	}
@@ -103,28 +102,6 @@ func run() {
 
 	logg.Info("calendar is running...")
 	wg.Wait()
-}
-
-func getViper() (*viper.Viper, error) {
-	v := viper.New()
-	v.SetEnvPrefix(configEnvPrefix)
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
-
-	if cfgFile == "" {
-		err := v.ReadConfig(bytes.NewBuffer([]byte("")))
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		v.SetConfigFile(cfgFile)
-		err := v.ReadInConfig()
-		if err != nil {
-			return nil, fmt.Errorf("config file '%s' error: %w", cfgFile, err)
-		}
-		fmt.Println("Using config file:", cfgFile)
-	}
-	return v, nil
 }
 
 func createStorage(cfg StorageConf, v *viper.Viper) (event.Storage, error) {

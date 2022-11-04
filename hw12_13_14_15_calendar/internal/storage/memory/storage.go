@@ -15,6 +15,8 @@ type Storage struct {
 	idProvider IDProvider
 }
 
+var _ event.Storage = (*Storage)(nil)
+
 func New(idProvider IDProvider) *Storage {
 	return &Storage{
 		idProvider: idProvider,
@@ -86,6 +88,34 @@ func (s *Storage) GetMonthEvents(_ context.Context, date time.Time) ([]event.Eve
 	return s.filterByTimeRange(date.Unix(), date.AddDate(0, 1, 0).Unix()), nil
 }
 
+func (s *Storage) DeleteEventsOlderThan(_ context.Context, date time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for key, e := range s.events {
+		if e.DateTime.Before(date) {
+			delete(s.events, key)
+		}
+	}
+	return nil
+}
+
+func (s *Storage) GetEventsNotifyBetween(_ context.Context, from time.Time, to time.Time) ([]event.Event, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	events := make([]event.Event, 0)
+	f := from.Unix()
+	t := to.Unix()
+	for _, e := range s.events {
+		if e.Duration.Seconds() > 0 {
+			nt := getNotifyTime(e)
+			if nt >= f && nt <= t {
+				events = append(events, e)
+			}
+		}
+	}
+	return events, nil
+}
+
 func (s *Storage) filterByTimeRange(start, end int64) []event.Event {
 	events := make([]event.Event, 0)
 	s.mu.RLock()
@@ -116,4 +146,8 @@ func isOverlapped(e1, e2 event.Event) bool {
 		return true
 	}
 	return false
+}
+
+func getNotifyTime(e event.Event) int64 {
+	return e.DateTime.Unix() - int64(e.Duration.Seconds())
 }

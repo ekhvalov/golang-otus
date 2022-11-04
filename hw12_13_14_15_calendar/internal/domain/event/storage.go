@@ -46,4 +46,8 @@ type Storage interface {
 	GetWeekEvents(ctx context.Context, date time.Time) ([]Event, error)
 	// A GetMonthEvents method returns a list of Events for a month-long period that starts from the date value.
 	GetMonthEvents(ctx context.Context, date time.Time) ([]Event, error)
+	// GetEventsNotifyBetween returns a list of events that should be notified between passed time
+	GetEventsNotifyBetween(ctx context.Context, from time.Time, to time.Time) ([]Event, error)
+	// A DeleteEventsOlderThan method deletes events that are older than passed date
+	DeleteEventsOlderThan(ctx context.Context, date time.Time) error
 }
