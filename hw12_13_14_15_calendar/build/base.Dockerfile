@@ -1,5 +1,5 @@
 # Собираем в гошке
-FROM golang:1.17.13
+FROM golang:1.19.3
 
 ENV CODE_DIR /go/src/
 
