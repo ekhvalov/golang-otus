@@ -27,24 +27,24 @@ build-img-calendar: build-img-base
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		--tag $(DOCKER_IMG_CALENDAR) \
+		--force-rm=true \
 		--file build/calendar.Dockerfile .
-	docker image rm $$(docker image ls -q -f label=otusgolang-cache=true)
 
 .PHONY: build-img-scheduler
 build-img-scheduler: build-img-base
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		--tag $(DOCKER_IMG_SCHEDULER) \
+		--force-rm=true \
 		--file build/scheduler.Dockerfile .
-	docker image rm $$(docker image ls -q -f label=otusgolang-cache=true)
 
 .PHONY: build-img-sender
 build-img-sender: build-img-base
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		--tag $(DOCKER_IMG_SENDER) \
+		--force-rm=true \
 		--file build/sender.Dockerfile .
-	docker image rm $$(docker image ls -q -f label=otusgolang-cache=true)
 
 build-img: build-img-calendar build-img-scheduler build-img-sender
 

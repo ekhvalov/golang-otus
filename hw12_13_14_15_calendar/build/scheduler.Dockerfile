@@ -1,6 +1,5 @@
 # Собираем в базовом образе
 FROM otus-golang/base:develop as build
-LABEL otusgolang-cache="true"
 
 COPY . .
 
