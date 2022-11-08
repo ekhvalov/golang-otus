@@ -11,18 +11,16 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 	go build -v -o ./bin/calendar_scheduler -ldflags "$(LDFLAGS)" ./cmd/scheduler
 	go build -v -o ./bin/calendar_sender -ldflags "$(LDFLAGS)" ./cmd/sender
-	go build -v -o "./bin/migrate" -ldflags "$(LDFLAGS)" ./cmd/migrate
+	go build -v -o ./bin/migrate -ldflags "$(LDFLAGS)" ./cmd/migrate
 
 run: build
 	$(BIN) --config ./configs/config.toml
 
-.PHONY: build-img-base
 build-img-base:
 	docker build \
 		--tag $(DOCKER_IMG_BASE) \
 		--file build/base.Dockerfile .
 
-.PHONY: build-img-calendar
 build-img-calendar: build-img-base
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
@@ -30,7 +28,6 @@ build-img-calendar: build-img-base
 		--force-rm=true \
 		--file build/calendar.Dockerfile .
 
-.PHONY: build-img-scheduler
 build-img-scheduler: build-img-base
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
@@ -38,7 +35,6 @@ build-img-scheduler: build-img-base
 		--force-rm=true \
 		--file build/scheduler.Dockerfile .
 
-.PHONY: build-img-sender
 build-img-sender: build-img-base
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
@@ -57,6 +53,8 @@ version: build
 test:
 	go test -race ./internal/... ./pkg/...
 
+test-full: lint build build-img test-integration
+
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.0
 
@@ -71,16 +69,14 @@ generate:
 	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/grpc
 	go generate github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http
 
-.Phony: up
-up:
+up: build-img
 	cd deployments && docker-compose up -d
 
-.Phony: down
 down:
-	cd deployments && docker-compose down
+	cd deployments && docker-compose down --remove-orphans
 
-.Phony: integration-tests
-integration-tests:
+test-integration: build-img
 	cd deployments/integration-tests && docker-compose up --exit-code-from tester
 
-.PHONY: build run build-img run-img version test lint generate
+.PHONY: build build-img build-img-base build-img-calendar build-img-scheduler build-img-sender down generate lint run \
+	run-img test test-full test-integration up version
