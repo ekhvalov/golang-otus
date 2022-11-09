@@ -1,20 +1,20 @@
 [http]
-address = ""
+address = "localhost"
 port = 8080
 
 [grpc]
-address = ""
+address = "localhost"
 port = 8081
 
 [logger]
 level = "INFO"
 
 [storage]
-type = "memory"
+type = "pgsql"
 
 [storage.pgsql]
 host = "localhost"
 port = "5432"
 username = "postgres"
-password = ""
+password = "password"
 database = "postgres"
