@@ -19,7 +19,13 @@ FROM alpine:3.16
 LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="calendar"
 LABEL MAINTAINERS="student@otus.ru"
+
 ENV CALENDAR_HTTP_ADDRESS="0.0.0.0"
+ENV CALENDAR_HTTP_PORT="8080"
+ENV CALENDAR_GRPC_ADDRESS="0.0.0.0"
+ENV CALENDAR_GRPC_PORT="8081"
+EXPOSE 8080
+EXPOSE 8081
 
 COPY --from=build /opt/calendar/calendar-app /usr/local/bin/calendar
 COPY --from=build /opt/calendar/calendar-migrate /usr/local/bin/calendar-migrate
