@@ -1,29 +1,20 @@
 version: "3.8"
 
 services:
-  calendar:
-    image: otus-golang/calendar:develop
-    ports:
-      - "8888:8080"
-    restart: on-failure
-
-  scheduler:
-    image: otus-golang/calendar-scheduler:develop
-    environment:
-      SCHEDULER_QUEUE_RABBITMQ_ADDRESS: rabbitmq
-    restart: on-failure
-    depends_on:
-      - rabbitmq
-
-  sender:
-    image: otus-golang/calendar-sender:develop
-    environment:
-      SENDER_QUEUE_RABBITMQ_ADDRESS: rabbitmq
-    restart: on-failure
-    depends_on:
-      - rabbitmq
-
   rabbitmq:
     image: rabbitmq:3.11.1
+    ports:
+      - "5672:5672"
 
+  db:
+    image: postgres:15.0
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
 
+volumes:
+  db:
