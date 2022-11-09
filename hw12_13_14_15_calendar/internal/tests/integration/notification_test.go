@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package integration_test
 
@@ -8,13 +7,12 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/require"
+	"os"
+	"testing"
+	"time"
 )
 
 const (
@@ -27,11 +25,18 @@ const (
 )
 
 func Test_SendNotification(t *testing.T) {
-	time.Sleep(time.Second * 10)
-
-	connection, err := amqp.Dial(getAMQPDsn())
-	require.NoError(t, err)
-	ch, err := connection.Channel()
+	tick := time.Second
+	waitFor := tick * 30
+	var conn *amqp.Connection
+	require.Eventually(t, func() bool {
+		connection, err := amqp.Dial(getAMQPDsn())
+		if err != nil {
+			return false
+		}
+		conn = connection
+		return true
+	}, waitFor, tick, "can not connect to queue")
+	ch, err := conn.Channel()
 	require.NoError(t, err)
 	buffer := bytes.Buffer{}
 	encoder := gob.NewEncoder(&buffer)
@@ -58,8 +63,16 @@ func Test_SendNotification(t *testing.T) {
 
 	time.Sleep(time.Second * 3)
 
-	data, err := os.ReadFile(getEnv("TESTS_WRITER_TARGET_FILE", defaultTargetFile))
-	require.NoError(t, err)
+	fileName := getEnv("TESTS_WRITER_TARGET_FILE", defaultTargetFile)
+	var data []byte
+	require.Eventually(t, func() bool {
+		d, err := os.ReadFile(fileName)
+		if err != nil {
+			return false
+		}
+		data = d
+		return true
+	}, waitFor, tick, "can not read file")
 
 	require.Contains(t, string(data), n.EventTitle)
 }
