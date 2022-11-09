@@ -18,7 +18,7 @@ CREATE TABLE events (
     title       CHARACTER VARYING        NOT NULL,
     description text                     NOT NULL,
     start_time  timestamp 				 NOT NULL,
-    duration    BIGINT                   NOT NULL
+    end_time    timestamp                NOT NULL
 );`)
 	return err
 }

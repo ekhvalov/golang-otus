@@ -42,14 +42,23 @@ func (s *Storage) Create(ctx context.Context, e event.Event) (event.Event, error
 			return event.Event{}, fmt.Errorf("database connection error: %w", err)
 		}
 	}
+	startTime := e.DateTime.UTC()
+	endTime := e.DateTime.Add(e.Duration).UTC()
+	isTimeAvailable, err := s.isTimeAvailable(ctx, startTime, endTime)
+	if err != nil {
+		return event.Event{}, fmt.Errorf("check time availability event error: %w", err)
+	}
+	if !isTimeAvailable {
+		return event.Event{}, event.ErrDateBusy
+	}
 	var lastID uint64
-	err := s.conn.QueryRow(
+	err = s.conn.QueryRow(
 		ctx,
-		`INSERT INTO events (title, description, start_time, duration, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		`INSERT INTO events (title, description, start_time, end_time, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
 		e.Title,
 		e.Description,
-		e.DateTime,
-		e.Duration,
+		startTime,
+		endTime,
 		e.UserID,
 	).Scan(&lastID)
 	if err != nil {
@@ -66,13 +75,22 @@ func (s *Storage) Update(ctx context.Context, eventID string, e event.Event) err
 			return fmt.Errorf("database connection error: %w", err)
 		}
 	}
-	_, err := s.conn.Query(
+	startTime := e.DateTime.UTC()
+	endTime := e.DateTime.Add(e.Duration).UTC()
+	isTimeAvailable, err := s.isTimeAvailable(ctx, startTime, endTime)
+	if err != nil {
+		return fmt.Errorf("check time availability event error: %w", err)
+	}
+	if !isTimeAvailable {
+		return event.ErrDateBusy
+	}
+	_, err = s.conn.Query(
 		ctx,
-		`UPDATE events set title=$1, description=$2, start_time=$3, duration=$4, user_id=$5 WHERE id=$6`,
+		`UPDATE events set title=$1, description=$2, start_time=$3, end_time=$4, user_id=$5 WHERE id=$6`,
 		e.Title,
 		e.Description,
-		e.DateTime,
-		e.Duration,
+		startTime,
+		endTime,
 		e.UserID,
 		eventID,
 	)
@@ -97,25 +115,22 @@ func (s *Storage) Delete(ctx context.Context, eventID string) error {
 }
 
 func (s *Storage) GetDayEvents(ctx context.Context, date time.Time) ([]event.Event, error) {
-	start := date.Unix()
-	end := date.AddDate(0, 0, 1).Unix()
-	return s.getEventsByTimeRange(ctx, start, end)
+	end := date.AddDate(0, 0, 1)
+	return s.getEventsByTimeRange(ctx, date, end)
 }
 
 func (s *Storage) GetWeekEvents(ctx context.Context, date time.Time) ([]event.Event, error) {
-	start := date.Unix()
-	end := date.AddDate(0, 0, 7).Unix()
-	return s.getEventsByTimeRange(ctx, start, end)
+	end := date.AddDate(0, 0, 7)
+	return s.getEventsByTimeRange(ctx, date, end)
 }
 
 func (s *Storage) GetMonthEvents(ctx context.Context, date time.Time) ([]event.Event, error) {
-	start := date.Unix()
-	end := date.AddDate(0, 1, 0).Unix()
-	return s.getEventsByTimeRange(ctx, start, end)
+	end := date.AddDate(0, 1, 0)
+	return s.getEventsByTimeRange(ctx, date, end)
 }
 
 func (s *Storage) GetEventsNotifyBetween(ctx context.Context, from time.Time, to time.Time) ([]event.Event, error) {
-	return s.getEventsByTimeRange(ctx, from.Unix(), to.Unix())
+	return s.getEventsByTimeRange(ctx, from, to)
 }
 
 func (s *Storage) DeleteEventsOlderThan(ctx context.Context, date time.Time) error {
@@ -130,7 +145,7 @@ func (s *Storage) DeleteEventsOlderThan(ctx context.Context, date time.Time) err
 	return err
 }
 
-func (s *Storage) getEventsByTimeRange(ctx context.Context, start, end int64) ([]event.Event, error) {
+func (s *Storage) getEventsByTimeRange(ctx context.Context, start, end time.Time) ([]event.Event, error) {
 	if s.conn == nil {
 		err := s.Connect(ctx)
 		if err != nil {
@@ -146,24 +161,44 @@ SELECT
     title,
     description,
     start_time,
-    duration
-FROM events WHERE start_time >= $1 and start_time <= $2`,
-		start,
-		end,
+    end_time
+FROM events WHERE start_time >= $1 and start_time < $2`,
+		start.UTC(),
+		end.UTC(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get events error: %w", err)
 	}
 	events := make([]event.Event, 0)
 	for result.Next() {
-		var date int64
+		var startTime, endTime time.Time
 		e := event.Event{}
-		err = result.Scan(&e.ID, &e.UserID, &e.Title, &e.Description, &date, &e.Duration)
+		err = result.Scan(&e.ID, &e.UserID, &e.Title, &e.Description, &startTime, &endTime)
 		if err != nil {
 			return nil, fmt.Errorf("retrieve events error: %w", err)
 		}
-		e.DateTime = time.Unix(date, 0)
+		e.DateTime = startTime
+		e.Duration = startTime.Sub(endTime)
 		events = append(events, e)
 	}
 	return events, nil
+}
+
+func (s *Storage) isTimeAvailable(ctx context.Context, startTime, endTime time.Time) (bool, error) {
+	sql := `
+SELECT COUNT(*) FROM events WHERE (
+    (start_time >= $1 AND start_time < $2)
+    OR 
+    (end_time > $1 AND end_time <= $2)
+    OR
+    ($1 >= start_time AND $1 < end_time)
+    OR 
+    ($2 > start_time AND $2 <= end_time)
+) LIMIT 1;`
+	result := s.conn.QueryRow(ctx, sql, startTime, endTime)
+	var count int
+	if err := result.Scan(&count); err != nil {
+		return false, err
+	}
+	return count == 0, nil
 }
