@@ -53,6 +53,9 @@ version: build
 test:
 	go test -race ./internal/... ./pkg/...
 
+test-integration: build-img
+	cd deployments/integration-tests && docker-compose up --exit-code-from tester && docker-compose down -v
+
 test-full: lint build build-img test-integration
 
 install-lint-deps:
@@ -74,9 +77,6 @@ up: build-img
 
 down:
 	cd deployments && docker-compose down --remove-orphans
-
-test-integration: build-img
-	cd deployments/integration-tests && docker-compose up --exit-code-from tester
 
 .PHONY: build build-img build-img-base build-img-calendar build-img-scheduler build-img-sender down generate lint run \
 	run-img test test-full test-integration up version

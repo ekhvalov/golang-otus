@@ -3,9 +3,12 @@ version: "3.8"
 services:
   calendar:
     image: otus-golang/calendar:develop
-    expose:
-      - 8080
+    environment:
+      CALENDAR_STORAGE_PGSQL_HOST: pgsql
     restart: on-failure
+    depends_on:
+      - rabbitmq
+      - pgsql
 
   scheduler:
     image: otus-golang/calendar-scheduler:develop
@@ -14,6 +17,7 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq
+      - pgsql
 
   sender:
     image: otus-golang/calendar-sender:develop
@@ -23,24 +27,41 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq
+      - pgsql
     volumes:
       - /tmp:/tmp
-    command: sh -c 'sleep 5 && calendar-sender --config /etc/calendar/config.toml'
+    command: sh -c 'sleep 10 && calendar-sender --config /etc/calendar/config.toml'
 
   rabbitmq:
     image: rabbitmq:3.11.1
 
+  pgsql:
+    image: postgres:15.0
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: password
+
+  migrator:
+    image: otus-golang/calendar:develop
+    environment:
+      CALENDAR_STORAGE_PGSQL_HOST: pgsql
+    restart: on-failure
+    depends_on:
+      - pgsql
+    command: /bin/sh -c 'sleep 15 && calendar-migrate --config /etc/calendar/config.toml --command up && sleep 120'
 
   tester:
-    image: golang:1.17.13
+    image: otus-golang/base:develop
     working_dir: /usr/src/calendar
     volumes:
       - ../..:/usr/src/calendar
       - /tmp:/tmp
     environment:
       TESTS_HTTP_SERVER_HOST: calendar
+      TESTS_DATABASE_HOST: pgsql
       TESTS_RQBBITMQ_HOST: rabbitmq
       TESTS_WRITER_TARGET_FILE: /tmp/writer.txt
-    command: [ "go", "test", "-tags=integration", "./internal/tests/integration/..."]
-
-
+    depends_on:
+      - pgsql
+      - rabbitmq
+    command: [ "go", "test", "-v", "-tags=integration", "./internal/tests/integration/..."]
