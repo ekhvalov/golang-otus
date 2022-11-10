@@ -78,9 +78,8 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			c := gomock.NewController(t)
-			s, err := NewScheduler(tt.getStorage(c), tt.getProducer(c))
+			s, err := NewScheduler(tt.getStorage(c), tt.getProducer(c), tt.getEventsTimeout, tt.getEventsTimeout)
 			require.NoError(t, err)
-			s.(*scheduler).scanInterval = tt.getEventsTimeout
 			ctx, cancel := context.WithTimeout(context.Background(), tt.contextTimeout)
 			defer cancel()
 
@@ -128,9 +127,8 @@ func Test_scheduler_FindNotificationReadyEvents(t *testing.T) {
 				return make([]event.Event, 0), nil
 			}).
 			AnyTimes()
-		s, err := NewScheduler(storage, producer)
+		s, err := NewScheduler(storage, producer, time.Millisecond*10, time.Millisecond*10)
 		require.NoError(t, err)
-		s.(*scheduler).scanInterval = time.Millisecond * 10
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*45)
 		defer cancel()
@@ -173,9 +171,13 @@ func Test_scheduler_CleanOldEvents(t *testing.T) {
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			controller := gomock.NewController(t)
-			s, err := NewScheduler(tt.getStorage(controller), queuemock.NewMockProducer(controller))
+			s, err := NewScheduler(
+				tt.getStorage(controller),
+				queuemock.NewMockProducer(controller),
+				tt.cleanTimeout,
+				tt.cleanTimeout,
+			)
 			require.NoError(t, err)
-			s.(*scheduler).cleanInterval = tt.cleanTimeout
 			ctx, cancel := context.WithTimeout(context.Background(), tt.contextTimeout)
 			defer cancel()
 
