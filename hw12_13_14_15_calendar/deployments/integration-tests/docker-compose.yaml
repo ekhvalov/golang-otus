@@ -14,22 +14,24 @@ services:
     image: otus-golang/calendar-scheduler:develop
     environment:
       SCHEDULER_QUEUE_RABBITMQ_ADDRESS: rabbitmq
+      SCHEDULER_STORAGE_PGSQL_HOST: pgsql
     restart: on-failure
     depends_on:
       - rabbitmq
       - pgsql
+    command: sh -c 'sleep 10 && calendar-scheduler --config /etc/calendar/config.toml --scan_interval 5s'
 
   sender:
     image: otus-golang/calendar-sender:develop
     environment:
       SENDER_QUEUE_RABBITMQ_ADDRESS: rabbitmq
-      SENDER_SENDER_WRITER_TARGET_FILE: /tmp/writer.txt
+      SENDER_WRITER_TARGET_FILE: /tmp/writer.txt
     restart: on-failure
     depends_on:
       - rabbitmq
       - pgsql
     volumes:
-      - /tmp:/tmp
+      - tmp:/tmp
     command: sh -c 'sleep 10 && calendar-sender --config /etc/calendar/config.toml'
 
   rabbitmq:
@@ -55,7 +57,7 @@ services:
     working_dir: /usr/src/calendar
     volumes:
       - ../..:/usr/src/calendar
-      - /tmp:/tmp
+      - tmp:/tmp
     environment:
       TESTS_HTTP_SERVER_HOST: calendar
       TESTS_DATABASE_HOST: pgsql
@@ -65,3 +67,7 @@ services:
       - pgsql
       - rabbitmq
     command: [ "go", "test", "-v", "-tags=integration", "./internal/tests/integration/..."]
+
+
+volumes:
+  tmp:

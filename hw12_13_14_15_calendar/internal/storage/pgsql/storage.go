@@ -136,7 +136,31 @@ func (s *Storage) GetMonthEvents(ctx context.Context, date time.Time) ([]event.E
 }
 
 func (s *Storage) GetEventsNotifyBetween(ctx context.Context, from time.Time, to time.Time) ([]event.Event, error) {
-	return s.getEventsByTimeRange(ctx, from, to)
+	if s.conn == nil {
+		err := s.Connect(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("database connection error: %w", err)
+		}
+	}
+	result, err := s.conn.Query(
+		ctx,
+		`
+SELECT
+    id,
+    user_id,
+    title,
+    description,
+    start_time,
+    end_time,
+    notify_time
+FROM events WHERE events.notify_time >= $1 and events.notify_time < $2`,
+		from.UTC(),
+		to.UTC(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return rowsToEvents(result)
 }
 
 func (s *Storage) DeleteEventsOlderThan(ctx context.Context, date time.Time) error {
@@ -176,22 +200,7 @@ FROM events WHERE start_time >= $1 and start_time < $2`,
 	if err != nil {
 		return nil, fmt.Errorf("get events error: %w", err)
 	}
-	events := make([]event.Event, 0)
-	for result.Next() {
-		var startTime, endTime, notifyTime time.Time
-		e := event.Event{}
-		err = result.Scan(&e.ID, &e.UserID, &e.Title, &e.Description, &startTime, &endTime, &notifyTime)
-		if err != nil {
-			return nil, fmt.Errorf("retrieve events error: %w", err)
-		}
-		e.DateTime = startTime
-		e.Duration = startTime.Sub(endTime)
-		if notifyTime != defaultNotifyTime {
-			e.NotifyBefore = startTime.Sub(notifyTime)
-		}
-		events = append(events, e)
-	}
-	return events, nil
+	return rowsToEvents(result)
 }
 
 func (s *Storage) isTimeAvailable(ctx context.Context, startTime, endTime time.Time) (bool, error) {
@@ -218,7 +227,26 @@ func getEventTimes(e event.Event) (startTime, endTime, notifyTime time.Time) {
 	endTime = e.DateTime.Add(e.Duration).UTC()
 	notifyTime = defaultNotifyTime
 	if e.NotifyBefore > 0 {
-		notifyTime = time.Unix(startTime.Unix()-int64(e.NotifyBefore.Seconds()), 0)
+		notifyTime = time.Unix(startTime.Unix()-int64(e.NotifyBefore.Seconds()), 0).UTC()
 	}
 	return startTime, endTime, notifyTime
+}
+
+func rowsToEvents(rows pgx.Rows) ([]event.Event, error) {
+	events := make([]event.Event, 0)
+	for rows.Next() {
+		var startTime, endTime, notifyTime time.Time
+		e := event.Event{}
+		err := rows.Scan(&e.ID, &e.UserID, &e.Title, &e.Description, &startTime, &endTime, &notifyTime)
+		if err != nil {
+			return nil, fmt.Errorf("retrieve events error: %w", err)
+		}
+		e.DateTime = startTime
+		e.Duration = startTime.Sub(endTime)
+		if notifyTime != defaultNotifyTime {
+			e.NotifyBefore = startTime.Sub(notifyTime)
+		}
+		events = append(events, e)
+	}
+	return events, nil
 }

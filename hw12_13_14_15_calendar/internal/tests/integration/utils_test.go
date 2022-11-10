@@ -33,7 +33,7 @@ VALUES ($1, $2, $3, $4, $5, $6)`
 	for _, e := range events {
 		notifyTime := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 		if e.NotifyBefore > 0 {
-			notifyTime = e.DateTime.Add(e.NotifyBefore)
+			notifyTime = time.Unix(e.DateTime.Unix()-int64(e.NotifyBefore.Seconds()), 0).UTC()
 		}
 		if e.UserID == "" {
 			e.UserID = "10"

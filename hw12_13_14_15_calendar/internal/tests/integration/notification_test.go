@@ -3,78 +3,101 @@
 package integration_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"fmt"
-	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
-	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/stretchr/testify/require"
 	"os"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
+	"github.com/jackc/pgx/v5"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 const (
-	exchangeName        = ""
-	contentType         = "application/octet-stream"
-	defaultRabbitMQHost = "localhost"
-	defaultRabbitMQPort = "5672"
-	defaultQueueName    = "events_notifications"
-	defaultTargetFile   = "/tmp/writer.txt"
+	defaultTargetFile = "/tmp/writer.txt"
 )
 
-func Test_SendNotification(t *testing.T) {
-	tick := time.Second
-	waitFor := tick * 30
-	var conn *amqp.Connection
-	require.Eventually(t, func() bool {
-		connection, err := amqp.Dial(getAMQPDsn())
+func TestNotification(t *testing.T) {
+	suite.Run(t, new(notificationSuite))
+}
+
+type notificationSuite struct {
+	suite.Suite
+	ctx            context.Context
+	cancel         context.CancelFunc
+	tick           time.Duration
+	waitFor        time.Duration
+	db             *pgx.Conn
+	senderFileName string
+}
+
+func (s *notificationSuite) SetupSuite() {
+	s.tick = time.Second
+	s.waitFor = s.tick * 30
+	s.ctx, s.cancel = context.WithCancel(context.Background())
+	s.senderFileName = getEnv("TESTS_WRITER_TARGET_FILE", defaultTargetFile)
+
+	require.Eventually(s.T(), func() bool {
+		connect, err := pgx.Connect(s.ctx, getDatabaseAddress())
 		if err != nil {
 			return false
 		}
-		conn = connection
+		s.db = connect
 		return true
-	}, waitFor, tick, "can not connect to queue")
-	ch, err := conn.Channel()
-	require.NoError(t, err)
-	buffer := bytes.Buffer{}
-	encoder := gob.NewEncoder(&buffer)
-	n := notification.Notification{
-		EventID:    "100500",
-		EventTitle: "Event 1",
-		EventDate:  time.Now(),
-		UserID:     "100600",
+	}, s.waitFor, s.tick, "can not connect to database")
+
+	require.Eventually(s.T(), func() bool {
+		return s.db.Ping(s.ctx) == nil
+	}, s.waitFor, s.tick, "can not ping to database")
+
+	require.Eventually(s.T(), func() bool {
+		sql := "SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'events');"
+		result := s.db.QueryRow(s.ctx, sql)
+		var isTableExists bool
+		err := result.Scan(&isTableExists)
+		require.NoError(s.T(), err)
+		return isTableExists
+	}, s.waitFor, s.tick, "migrations did not applied")
+}
+
+func (s *notificationSuite) TearDownSuite() {
+	s.cleanDatabase()
+	if s.db != nil {
+		_ = s.db.Close(s.ctx)
 	}
-	err = encoder.Encode(n)
-	require.NoError(t, err)
+	s.cancel()
+}
 
-	err = ch.PublishWithContext(
-		context.Background(),
-		exchangeName,
-		getEnv("TESTS_QUEUE_NAME", defaultQueueName),
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: contentType,
-			Body:        buffer.Bytes(),
-		})
-	require.NoError(t, err)
+func (s *notificationSuite) SetupTest() {
+	s.cleanDatabase()
+}
 
-	time.Sleep(time.Second * 3)
+func (s *notificationSuite) cleanDatabase() {
+	_, err := s.db.Exec(s.ctx, "TRUNCATE TABLE events;")
+	if err != nil {
+		panic(fmt.Errorf("database clean error: %s", err))
+	}
+}
 
-	fileName := getEnv("TESTS_WRITER_TARGET_FILE", defaultTargetFile)
-	var data []byte
-	require.Eventually(t, func() bool {
-		d, err := os.ReadFile(fileName)
+func (s *notificationSuite) Test_SendNotification() {
+	e := event.Event{
+		Title:        fmt.Sprintf("Event %d", time.Now().UnixMicro()),
+		DateTime:     time.Now().Add(time.Minute + time.Second*10).UTC(),
+		Duration:     time.Minute * 20,
+		NotifyBefore: time.Minute,
+	}
+	seedEventsIntoDB(s.T(), s.ctx, s.db, []event.Event{e})
+
+	require.Eventually(s.T(), func() bool {
+		data, err := os.ReadFile(s.senderFileName)
 		if err != nil {
 			return false
 		}
-		data = d
-		return true
-	}, waitFor, tick, "can not read file")
-
-	require.Contains(t, string(data), n.EventTitle)
+		return strings.Contains(string(data), e.Title)
+	}, s.waitFor, s.tick, "can not read file")
 }
 
 func getEnv(name, defaultValue string) string {
@@ -83,10 +106,4 @@ func getEnv(name, defaultValue string) string {
 		return defaultValue
 	}
 	return value
-}
-
-func getAMQPDsn() string {
-	host := getEnv("TESTS_RQBBITMQ_HOST", defaultRabbitMQHost)
-	port := getEnv("TESTS_RABBITMQ_PORT", defaultRabbitMQPort)
-	return fmt.Sprintf("amqp://guest:guest@%s:%s", host, port)
 }
