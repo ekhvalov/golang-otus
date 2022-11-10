@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var defaultNotifyTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+
 type Storage struct {
 	dsn  string
 	conn *pgx.Conn
@@ -42,8 +44,7 @@ func (s *Storage) Create(ctx context.Context, e event.Event) (event.Event, error
 			return event.Event{}, fmt.Errorf("database connection error: %w", err)
 		}
 	}
-	startTime := e.DateTime.UTC()
-	endTime := e.DateTime.Add(e.Duration).UTC()
+	startTime, endTime, notifyTime := getEventTimes(e)
 	isTimeAvailable, err := s.isTimeAvailable(ctx, startTime, endTime)
 	if err != nil {
 		return event.Event{}, fmt.Errorf("check time availability event error: %w", err)
@@ -54,12 +55,15 @@ func (s *Storage) Create(ctx context.Context, e event.Event) (event.Event, error
 	var lastID uint64
 	err = s.conn.QueryRow(
 		ctx,
-		`INSERT INTO events (title, description, start_time, end_time, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		`
+INSERT INTO events (title, description, start_time, end_time, user_id, notify_time) 
+VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
 		e.Title,
 		e.Description,
 		startTime,
 		endTime,
 		e.UserID,
+		notifyTime,
 	).Scan(&lastID)
 	if err != nil {
 		return event.Event{}, fmt.Errorf("save event error: %w", err)
@@ -75,8 +79,7 @@ func (s *Storage) Update(ctx context.Context, eventID string, e event.Event) err
 			return fmt.Errorf("database connection error: %w", err)
 		}
 	}
-	startTime := e.DateTime.UTC()
-	endTime := e.DateTime.Add(e.Duration).UTC()
+	startTime, endTime, notifyTime := getEventTimes(e)
 	isTimeAvailable, err := s.isTimeAvailable(ctx, startTime, endTime)
 	if err != nil {
 		return fmt.Errorf("check time availability event error: %w", err)
@@ -86,12 +89,15 @@ func (s *Storage) Update(ctx context.Context, eventID string, e event.Event) err
 	}
 	_, err = s.conn.Query(
 		ctx,
-		`UPDATE events set title=$1, description=$2, start_time=$3, end_time=$4, user_id=$5 WHERE id=$6`,
+		`
+UPDATE events set title=$1, description=$2, start_time=$3, end_time=$4, user_id=$5, notify_time=$6 
+              WHERE id=$7`,
 		e.Title,
 		e.Description,
 		startTime,
 		endTime,
 		e.UserID,
+		notifyTime,
 		eventID,
 	)
 	if err != nil {
@@ -161,7 +167,8 @@ SELECT
     title,
     description,
     start_time,
-    end_time
+    end_time,
+    notify_time
 FROM events WHERE start_time >= $1 and start_time < $2`,
 		start.UTC(),
 		end.UTC(),
@@ -171,14 +178,17 @@ FROM events WHERE start_time >= $1 and start_time < $2`,
 	}
 	events := make([]event.Event, 0)
 	for result.Next() {
-		var startTime, endTime time.Time
+		var startTime, endTime, notifyTime time.Time
 		e := event.Event{}
-		err = result.Scan(&e.ID, &e.UserID, &e.Title, &e.Description, &startTime, &endTime)
+		err = result.Scan(&e.ID, &e.UserID, &e.Title, &e.Description, &startTime, &endTime, &notifyTime)
 		if err != nil {
 			return nil, fmt.Errorf("retrieve events error: %w", err)
 		}
 		e.DateTime = startTime
 		e.Duration = startTime.Sub(endTime)
+		if notifyTime != defaultNotifyTime {
+			e.NotifyBefore = startTime.Sub(notifyTime)
+		}
 		events = append(events, e)
 	}
 	return events, nil
@@ -201,4 +211,14 @@ SELECT COUNT(*) FROM events WHERE (
 		return false, err
 	}
 	return count == 0, nil
+}
+
+func getEventTimes(e event.Event) (startTime, endTime, notifyTime time.Time) {
+	startTime = e.DateTime.UTC()
+	endTime = e.DateTime.Add(e.Duration).UTC()
+	notifyTime = defaultNotifyTime
+	if e.NotifyBefore > 0 {
+		notifyTime = time.Unix(startTime.Unix()-int64(e.NotifyBefore.Seconds()), 0)
+	}
+	return startTime, endTime, notifyTime
 }
