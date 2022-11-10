@@ -47,10 +47,10 @@ func run() error {
 		return fmt.Errorf("consumer subscribe error: %w", err)
 	}
 	c := config.NewSenderWriterConfig(v)
-	var output io.Writer
-	if c.TargetFile == "" {
-		output = os.Stdout
-	} else {
+	output := &cloneWriter{}
+	output.addWriter(os.Stdout)
+
+	if c.TargetFile != "" {
 		file, err := os.Create(c.TargetFile)
 		if err != nil {
 			return fmt.Errorf("create file '%s' error: %w", c.TargetFile, err)
@@ -58,7 +58,7 @@ func run() error {
 		defer func() {
 			err = file.Close()
 		}()
-		output = file
+		output.addWriter(file)
 	}
 	s := sender.NewSender(output)
 	for notification := range notifications {
@@ -67,4 +67,25 @@ func run() error {
 		}
 	}
 	return err
+}
+
+type cloneWriter struct {
+	writers []io.Writer
+}
+
+func (w *cloneWriter) Write(p []byte) (n int, err error) {
+	for _, writer := range w.writers {
+		n, err = writer.Write(p)
+		if err != nil {
+			return n, fmt.Errorf("write error: %w", err)
+		}
+	}
+	return n, nil
+}
+
+func (w *cloneWriter) addWriter(writer io.Writer) {
+	if w.writers == nil {
+		w.writers = make([]io.Writer, 0)
+	}
+	w.writers = append(w.writers, writer)
 }
