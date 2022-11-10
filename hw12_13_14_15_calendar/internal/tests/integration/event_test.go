@@ -6,28 +6,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
-	"github.com/jackc/pgx/v5"
-	"github.com/stretchr/testify/suite"
 	"io"
 	"net/http"
-	"os"
 	"sort"
 	"testing"
 	"time"
 
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/openapi"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
-)
-
-const (
-	defaultHttpServerHost   = "localhost"
-	defaultHttpServerPort   = "8080"
-	defaultDatabaseHost     = "localhost"
-	defaultDatabasePort     = "5432"
-	defaultDatabaseUsername = "postgres"
-	defaultDatabasePassword = "password"
-	defaultDatabaseName     = "postgres"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestEvent(t *testing.T) {
@@ -161,7 +150,7 @@ func (s *eventSuite) Test_CreateEvent_Http_Error_DateBusy() {
 			Duration: time.Hour * 3,
 		},
 	}
-	s.seedEventsIntoDB(events)
+	seedEventsIntoDB(s.T(), s.ctx, s.db, events)
 
 	tests := []struct {
 		testName     string
@@ -275,7 +264,7 @@ func (s *eventSuite) Test_GetEvents_Http() {
 		Duration: time.Minute * 20,
 	}
 	events := []event.Event{event1, event2, event3, event4}
-	s.seedEventsIntoDB(events)
+	seedEventsIntoDB(s.T(), s.ctx, s.db, events)
 
 	tests := map[string]struct {
 		period     openapi.EventsPeriod
@@ -315,36 +304,4 @@ func (s *eventSuite) Test_GetEvents_Http() {
 			require.ElementsMatch(t, tt.wantTitles, actualEventTitles)
 		})
 	}
-}
-
-func (s *eventSuite) seedEventsIntoDB(events []event.Event) {
-	sql := "INSERT INTO events (title, start_time, end_time, description, user_id) VALUES ($1, $2, $3, '', 1)"
-	stmt, err := s.db.Prepare(s.ctx, "insert event", sql)
-	require.NoError(s.T(), err)
-	for _, e := range events {
-		_, err = s.db.Exec(s.ctx, stmt.Name, e.Title, e.DateTime, e.DateTime.Add(e.Duration))
-		require.NoError(s.T(), err)
-	}
-	require.NoError(s.T(), s.db.Deallocate(s.ctx, stmt.Name))
-}
-
-func getHttpServerAddress() string {
-	host := os.Getenv("TESTS_HTTP_SERVER_HOST")
-	if host == "" {
-		host = defaultHttpServerHost
-	}
-	port := os.Getenv("TESTS_HTTP_SERVER_PORT")
-	if port == "" {
-		port = defaultHttpServerPort
-	}
-	return fmt.Sprintf("http://%s:%s", host, port)
-}
-
-func getDatabaseAddress() string {
-	host := getEnv("TESTS_DATABASE_HOST", defaultDatabaseHost)
-	port := getEnv("TESTS_DATABASE_PORT", defaultDatabasePort)
-	username := getEnv("TESTS_DATABASE_USERNAME", defaultDatabaseUsername)
-	password := getEnv("TESTS_DATABASE_PASSWORD", defaultDatabasePassword)
-	name := getEnv("TESTS_DATABASE_NAME", defaultDatabaseName)
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, host, port, name)
 }
