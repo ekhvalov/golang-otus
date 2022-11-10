@@ -19,7 +19,7 @@ services:
     depends_on:
       - rabbitmq
       - pgsql
-    command: sh -c 'sleep 10 && calendar-scheduler --config /etc/calendar/config.toml --scan_interval 5s'
+    command: sh -c 'sleep 15 && calendar-scheduler --config /etc/calendar/config.toml --scan_interval 5s'
 
   sender:
     image: otus-golang/calendar-sender:develop
@@ -32,7 +32,7 @@ services:
       - pgsql
     volumes:
       - tmp:/tmp
-    command: sh -c 'sleep 10 && calendar-sender --config /etc/calendar/config.toml'
+    command: sh -c 'sleep 15 && calendar-sender --config /etc/calendar/config.toml'
 
   rabbitmq:
     image: rabbitmq:3.11.1
