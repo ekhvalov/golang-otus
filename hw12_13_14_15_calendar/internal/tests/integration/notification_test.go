@@ -99,11 +99,3 @@ func (s *notificationSuite) Test_SendNotification() {
 		return strings.Contains(string(data), e.Title)
 	}, s.waitFor, s.tick, "can not read file")
 }
-
-func getEnv(name, defaultValue string) string {
-	value := os.Getenv(name)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}

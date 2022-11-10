@@ -64,3 +64,11 @@ func getDatabaseAddress() string {
 	name := getEnv("TESTS_DATABASE_NAME", defaultDatabaseName)
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, host, port, name)
 }
+
+func getEnv(name, defaultValue string) string {
+	value := os.Getenv(name)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
