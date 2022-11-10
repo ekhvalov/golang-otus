@@ -31,7 +31,6 @@ func init() {
 }
 
 func run() error {
-	fmt.Println("Using config file:", configFile)
 	v, err := config.CreateViper(configFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
 		return fmt.Errorf("create viper error: %w", err)
