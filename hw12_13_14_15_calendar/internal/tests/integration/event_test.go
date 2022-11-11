@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
 	"testing"
 	"time"
 
@@ -30,7 +29,7 @@ type eventSuite struct {
 	tick       time.Duration
 	waitFor    time.Duration
 	db         *pgx.Conn
-	httpClient *openapi.Client
+	clientHttp *openapi.Client
 }
 
 func (s *eventSuite) SetupSuite() {
@@ -65,7 +64,7 @@ func (s *eventSuite) SetupSuite() {
 		if err != nil {
 			return false
 		}
-		s.httpClient = client
+		s.clientHttp = client
 		return true
 	}, s.waitFor, s.tick, "can not connect to HTTP client")
 }
@@ -96,7 +95,7 @@ func (s *eventSuite) Test_CreateEvent_Http() {
 		Duration: 20,
 		Title:    fmt.Sprintf("Event %d", eventTime.UnixMicro()),
 	}
-	response, err := s.httpClient.PostEvents(s.ctx, e)
+	response, err := s.clientHttp.PostEvents(s.ctx, e)
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), http.StatusOK, response.StatusCode)
 
@@ -128,7 +127,7 @@ func (s *eventSuite) Test_CreateEvent_Http_Error_InvalidEvent() {
 	}
 	for testName, e := range tests {
 		s.T().Run(testName, func(t *testing.T) {
-			response, err := s.httpClient.PostEvents(s.ctx, e)
+			response, err := s.clientHttp.PostEvents(s.ctx, e)
 			require.NoError(s.T(), err)
 			require.Equal(s.T(), http.StatusBadRequest, response.StatusCode)
 		})
@@ -150,7 +149,7 @@ func (s *eventSuite) Test_CreateEvent_Http_Error_DateBusy() {
 			Duration: time.Hour * 3,
 		},
 	}
-	seedEventsIntoDB(s.T(), s.ctx, s.db, events)
+	s.httpPostEvents(events)
 
 	tests := []struct {
 		testName     string
@@ -228,7 +227,7 @@ func (s *eventSuite) Test_CreateEvent_Http_Error_DateBusy() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.testName, func(t *testing.T) {
-			response, err := s.httpClient.PostEvents(s.ctx, openapi.NewEvent{
+			response, err := s.clientHttp.PostEvents(s.ctx, openapi.NewEvent{
 				Title:    tt.testName,
 				Date:     tt.date.Unix(),
 				Duration: int(tt.duration / time.Minute),
@@ -243,28 +242,18 @@ func (s *eventSuite) Test_GetEvents_Http() {
 	now := time.Now().UTC()
 	year, month, _ := now.AddDate(0, 1, 0).Date()
 	date := time.Date(year, month, 1, 0, 0, 0, 0, now.Location()) // start of the next month
-	event1 := event.Event{
-		Title:    "Event 1",
-		DateTime: date,
-		Duration: time.Minute * 20,
+	eventTimes := []time.Time{
+		date, date.Add(time.Hour), date.AddDate(0, 0, 1), date.AddDate(0, 0, 14),
 	}
-	event2 := event.Event{
-		Title:    "Event 2",
-		DateTime: date.Add(time.Hour),
-		Duration: time.Minute * 20,
+	events := make([]event.Event, len(eventTimes))
+	for i := 0; i < len(eventTimes); i++ {
+		events[i] = event.Event{
+			Title:    fmt.Sprintf("Event %d", now.UnixNano()),
+			DateTime: eventTimes[i],
+			Duration: time.Minute * 20,
+		}
 	}
-	event3 := event.Event{
-		Title:    "Event 3",
-		DateTime: date.AddDate(0, 0, 1),
-		Duration: time.Minute * 20,
-	}
-	event4 := event.Event{
-		Title:    "Event 4",
-		DateTime: date.AddDate(0, 0, 14),
-		Duration: time.Minute * 20,
-	}
-	events := []event.Event{event1, event2, event3, event4}
-	seedEventsIntoDB(s.T(), s.ctx, s.db, events)
+	s.httpPostEvents(events)
 
 	tests := map[string]struct {
 		period     openapi.EventsPeriod
@@ -272,20 +261,20 @@ func (s *eventSuite) Test_GetEvents_Http() {
 	}{
 		"day events": {
 			period:     openapi.Day,
-			wantTitles: []string{event1.Title, event2.Title},
+			wantTitles: []string{events[0].Title, events[1].Title},
 		},
 		"week events": {
 			period:     openapi.Week,
-			wantTitles: []string{event1.Title, event2.Title, event3.Title},
+			wantTitles: []string{events[0].Title, events[1].Title, events[2].Title},
 		},
 		"month events": {
 			period:     openapi.Month,
-			wantTitles: []string{event1.Title, event2.Title, event3.Title, event4.Title},
+			wantTitles: []string{events[0].Title, events[1].Title, events[2].Title, events[3].Title},
 		},
 	}
 	for testName, tt := range tests {
 		s.T().Run(testName, func(t *testing.T) {
-			response, err := s.httpClient.GetEvents(s.ctx, &openapi.GetEventsParams{
+			response, err := s.clientHttp.GetEvents(s.ctx, &openapi.GetEventsParams{
 				Date:   date.Unix(),
 				Period: tt.period,
 			})
@@ -300,8 +289,20 @@ func (s *eventSuite) Test_GetEvents_Http() {
 			for i, e := range actualEvents {
 				actualEventTitles[i] = e.Title
 			}
-			sort.Strings(actualEventTitles)
 			require.ElementsMatch(t, tt.wantTitles, actualEventTitles)
 		})
+	}
+}
+
+func (s *eventSuite) httpPostEvents(events []event.Event) {
+	for _, e := range events {
+		req := openapi.PostEventsJSONRequestBody{
+			Date:     e.DateTime.Unix(),
+			Duration: int(e.Duration / time.Minute),
+			Title:    e.Title,
+		}
+		resp, err := s.clientHttp.PostEvents(s.ctx, req)
+		s.Require().NoError(err)
+		s.Require().Equal(http.StatusOK, resp.StatusCode)
 	}
 }
