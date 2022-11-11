@@ -60,6 +60,7 @@ services:
       - tmp:/tmp
     environment:
       TESTS_HTTP_SERVER_HOST: calendar
+      TESTS_GRPC_SERVER_HOST: calendar
       TESTS_DATABASE_HOST: pgsql
       TESTS_RQBBITMQ_HOST: rabbitmq
       TESTS_WRITER_TARGET_FILE: /tmp/writer.txt

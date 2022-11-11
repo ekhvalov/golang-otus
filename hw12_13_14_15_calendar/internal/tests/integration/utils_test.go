@@ -17,6 +17,8 @@ import (
 const (
 	defaultHttpServerHost   = "localhost"
 	defaultHttpServerPort   = "8080"
+	defaultGrpcServerHost   = "localhost"
+	defaultGrpcServerPort   = "8081"
 	defaultDatabaseHost     = "localhost"
 	defaultDatabasePort     = "5432"
 	defaultDatabaseUsername = "postgres"
@@ -45,15 +47,15 @@ VALUES ($1, $2, $3, $4, $5, $6)`
 }
 
 func getHttpServerAddress() string {
-	host := os.Getenv("TESTS_HTTP_SERVER_HOST")
-	if host == "" {
-		host = defaultHttpServerHost
-	}
-	port := os.Getenv("TESTS_HTTP_SERVER_PORT")
-	if port == "" {
-		port = defaultHttpServerPort
-	}
+	host := getEnv("TESTS_HTTP_SERVER_HOST", defaultHttpServerHost)
+	port := getEnv("TESTS_HTTP_SERVER_PORT", defaultHttpServerPort)
 	return fmt.Sprintf("http://%s:%s", host, port)
+}
+
+func getGrpcServerAddress() string {
+	host := getEnv("TESTS_GRPC_SERVER_HOST", defaultGrpcServerHost)
+	port := getEnv("TESTS_GRPC_SERVER_PORT", defaultGrpcServerPort)
+	return fmt.Sprintf("%s:%s", host, port)
 }
 
 func getDatabaseAddress() string {

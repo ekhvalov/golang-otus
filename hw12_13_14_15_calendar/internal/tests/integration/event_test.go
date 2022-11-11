@@ -12,10 +12,13 @@ import (
 	"time"
 
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
+	grpcapi "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/grpc"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/pkg/api/openapi"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func TestEvent(t *testing.T) {
@@ -30,6 +33,7 @@ type eventSuite struct {
 	waitFor    time.Duration
 	db         *pgx.Conn
 	clientHttp *openapi.Client
+	clientGrpc grpcapi.CalendarClient
 }
 
 func (s *eventSuite) SetupSuite() {
@@ -67,6 +71,14 @@ func (s *eventSuite) SetupSuite() {
 		s.clientHttp = client
 		return true
 	}, s.waitFor, s.tick, "can not connect to HTTP client")
+
+	var grpcConn *grpc.ClientConn
+	var err error
+	s.Require().Eventually(func() bool {
+		grpcConn, err = grpc.Dial(getGrpcServerAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		return err == nil
+	}, s.waitFor, s.tick, fmt.Sprintf("grpc connection error: %v", err))
+	s.clientGrpc = grpcapi.NewCalendarClient(grpcConn)
 }
 
 func (s *eventSuite) TearDownSuite() {
@@ -304,5 +316,73 @@ func (s *eventSuite) httpPostEvents(events []event.Event) {
 		resp, err := s.clientHttp.PostEvents(s.ctx, req)
 		s.Require().NoError(err)
 		s.Require().Equal(http.StatusOK, resp.StatusCode)
+	}
+}
+
+func (s *eventSuite) Test_GetEvents_Grpc() {
+	now := time.Now().UTC()
+	year, month, _ := now.AddDate(0, 1, 0).Date()
+	date := time.Date(year, month, 1, 0, 0, 0, 0, now.Location()) // start of the next month
+	eventTimes := []time.Time{
+		date, date.Add(time.Hour), date.AddDate(0, 0, 1), date.AddDate(0, 0, 14),
+	}
+	events := make([]event.Event, len(eventTimes))
+	for i := 0; i < len(eventTimes); i++ {
+		events[i] = event.Event{
+			Title:    fmt.Sprintf("Event %d", now.UnixNano()),
+			DateTime: eventTimes[i],
+			Duration: time.Minute * 20,
+		}
+	}
+	s.grpcCreateEvents(events)
+
+	tests := map[string]struct {
+		period     openapi.EventsPeriod
+		wantTitles []string
+	}{
+		"day events": {
+			period:     openapi.Day,
+			wantTitles: []string{events[0].Title, events[1].Title},
+		},
+		"week events": {
+			period:     openapi.Week,
+			wantTitles: []string{events[0].Title, events[1].Title, events[2].Title},
+		},
+		"month events": {
+			period:     openapi.Month,
+			wantTitles: []string{events[0].Title, events[1].Title, events[2].Title, events[3].Title},
+		},
+	}
+	for testName, tt := range tests {
+		s.T().Run(testName, func(t *testing.T) {
+			response, err := s.clientHttp.GetEvents(s.ctx, &openapi.GetEventsParams{
+				Date:   date.Unix(),
+				Period: tt.period,
+			})
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, response.StatusCode)
+			actualEvents := make([]openapi.Event, 0)
+			body, err := io.ReadAll(response.Body)
+			require.NoError(t, err)
+			err = json.Unmarshal(body, &actualEvents)
+			require.NoError(t, err)
+			actualEventTitles := make([]string, len(actualEvents))
+			for i, e := range actualEvents {
+				actualEventTitles[i] = e.Title
+			}
+			require.ElementsMatch(t, tt.wantTitles, actualEventTitles)
+		})
+	}
+}
+
+func (s *eventSuite) grpcCreateEvents(events []event.Event) {
+	for _, e := range events {
+		_, err := s.clientGrpc.CreateEvent(s.ctx, &grpcapi.CreateEventRequest{
+			Title:    e.Title,
+			Date:     e.DateTime.Unix(),
+			Duration: int32(e.Duration / time.Minute),
+			UserId:   "10",
+		})
+		s.Require().NoError(err)
 	}
 }
