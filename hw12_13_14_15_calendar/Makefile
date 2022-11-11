@@ -76,7 +76,7 @@ up: build-img
 	cd deployments && docker-compose up -d
 
 down:
-	cd deployments && docker-compose down --remove-orphans
+	cd deployments && docker-compose down --remove-orphans --volumes
 
 .PHONY: build build-img build-img-base build-img-calendar build-img-scheduler build-img-sender down generate lint run \
 	run-img test test-full test-integration up version
