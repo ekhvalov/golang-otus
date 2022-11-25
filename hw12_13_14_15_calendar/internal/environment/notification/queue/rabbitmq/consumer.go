@@ -7,8 +7,8 @@ import (
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/notification"
 )
 
-func NewConsumer(conf ConfigRabbitMQ) queue.Consumer {
-	return &consumer{connector: newConnector(conf.GetDSN(), conf.QueueName)}
+func NewConsumer(config Config) queue.Consumer {
+	return &consumer{connector: newConnector(config.GetDSN(), config.QueueName)}
 }
 
 type consumer struct {

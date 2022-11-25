@@ -100,6 +100,11 @@ func notificationToBytes(notification notification.Notification) ([]byte, error)
 }
 
 func (c *connector) consume(ctx context.Context) (<-chan notification.Notification, error) {
+	if c.channel == nil {
+		if err := c.connect(); err != nil {
+			return nil, fmt.Errorf("connection error: %w", err)
+		}
+	}
 	ch := make(chan notification.Notification)
 	deliveries, err := c.channel.Consume(c.queueName, "", false, false, false, false, nil)
 	if err != nil {

@@ -3,13 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
 
-	appqueue "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/notification/queue"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
-	configviper "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config/viper"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/sender"
 	"github.com/spf13/cobra"
@@ -32,16 +31,14 @@ func init() {
 }
 
 func run() error {
-	fmt.Println("Using config file:", configFile)
-	configProvider, err := configviper.NewProvider(configFile, configEnvPrefix, configviper.DefaultEnvKeyReplacer)
+	v, err := config.CreateViper(configFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
-		return fmt.Errorf("create config error: %w", err)
+		return fmt.Errorf("create viper error: %w", err)
 	}
-	queueConsumer, err := createQueueConsumer(configProvider)
-	if err != nil {
-		return fmt.Errorf("create consumer error: %w", err)
-	}
-
+	queueConsumer := rabbitmq.NewConsumer(config.NewRabbitMQConfig(v))
+	defer func() {
+		err = queueConsumer.Close()
+	}()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
@@ -49,20 +46,46 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("consumer subscribe error: %w", err)
 	}
-	s := sender.NewSender(os.Stdout)
+	c := config.NewSenderWriterConfig(v)
+	output := &cloneWriter{}
+	output.addWriter(os.Stdout)
+
+	if c.TargetFile != "" {
+		file, err := os.Create(c.TargetFile)
+		if err != nil {
+			return fmt.Errorf("create file '%s' error: %w", c.TargetFile, err)
+		}
+		defer func() {
+			err = file.Close()
+		}()
+		output.addWriter(file)
+	}
+	s := sender.NewSender(output)
 	for notification := range notifications {
 		if err = s.Send(notification); err != nil {
 			return fmt.Errorf("send error: %w", err)
 		}
 	}
-	return nil
+	return err
 }
 
-func createQueueConsumer(provider config.Provider) (appqueue.Consumer, error) {
-	var cfg rabbitmq.ConfigRabbitMQ
-	err := provider.UnmarshalKey("queue.rabbitmq", cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal ConfigRabbitMQ error: %w", err)
+type cloneWriter struct {
+	writers []io.Writer
+}
+
+func (w *cloneWriter) Write(p []byte) (n int, err error) {
+	for _, writer := range w.writers {
+		n, err = writer.Write(p)
+		if err != nil {
+			return n, fmt.Errorf("write error: %w", err)
+		}
 	}
-	return rabbitmq.NewConsumer(cfg), nil
+	return n, nil
+}
+
+func (w *cloneWriter) addWriter(writer io.Writer) {
+	if w.writers == nil {
+		w.writers = make([]io.Writer, 0)
+	}
+	w.writers = append(w.writers, writer)
 }

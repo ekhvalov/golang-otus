@@ -4,6 +4,16 @@ type = "rabbitmq"
 [queue.rabbitmq]
 address = "localhost"
 port = 5672
-username = ""
-password = ""
+username = "guest"
+password = "guest"
 queue_name = "events_notifications"
+
+[storage]
+type = "pgsql"
+
+[storage.pgsql]
+host = "localhost"
+port = "5432"
+username = "postgres"
+password = "password"
+database = "postgres"

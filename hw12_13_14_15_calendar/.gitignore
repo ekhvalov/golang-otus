@@ -1,3 +1,4 @@
 logs/
 bin/
 deployments/docker-compose.override.yaml
+deployments/integration-tests/docker-compose.override.yaml

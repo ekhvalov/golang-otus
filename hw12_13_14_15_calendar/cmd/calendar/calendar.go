@@ -5,21 +5,17 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
-	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
-	pgsqlstorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/pgsql"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -47,11 +43,11 @@ func run() {
 
 	logg := logger.New(cfg.Logger.Level, os.Stdout)
 
-	storage, err := createStorage(cfg.Storage, v)
+	strg, err := storage.CreateStorage(v)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("create storage error: %w", err))
 	}
-	calendar, err := app.New(logg, storage)
+	calendar, err := app.New(logg, strg)
 	if err != nil {
 		cobra.CheckErr(err)
 	}
@@ -102,16 +98,4 @@ func run() {
 
 	logg.Info("calendar is running...")
 	wg.Wait()
-}
-
-func createStorage(cfg StorageConf, v *viper.Viper) (event.Storage, error) {
-	switch strings.ToLower(cfg.Type) {
-	case "memory":
-		return memorystorage.New(memorystorage.UUIDProvider{}), nil
-	case "pgsql":
-		conf := config.CreatePgsqlConfig(v)
-		return pgsqlstorage.NewStorage(conf), nil
-	default:
-		return nil, fmt.Errorf("undefined storage type: %s", cfg.Type)
-	}
 }

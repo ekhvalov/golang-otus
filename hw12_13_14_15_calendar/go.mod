@@ -9,10 +9,10 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-uuid v1.0.1
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/jackc/pgx/v5 v5.0.4
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/pressly/goose/v3 v3.7.0
+	github.com/rabbitmq/amqp091-go v1.5.0
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.13.0
@@ -42,7 +42,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect

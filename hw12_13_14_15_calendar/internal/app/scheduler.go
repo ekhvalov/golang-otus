@@ -37,7 +37,12 @@ type Scheduler interface {
 	CleanOldEvents(ctx context.Context, outDatePeriod time.Duration) error
 }
 
-func NewScheduler(storage event.Storage, producer queue.Producer) (Scheduler, error) {
+func NewScheduler(
+	storage event.Storage,
+	producer queue.Producer,
+	cleanInterval,
+	scanInterval time.Duration,
+) (Scheduler, error) {
 	if storage == nil {
 		return nil, fmt.Errorf("required Storage, but <nil> provided")
 	}
@@ -48,8 +53,8 @@ func NewScheduler(storage event.Storage, producer queue.Producer) (Scheduler, er
 		storage:       storage,
 		producer:      producer,
 		errors:        ErrSchedule{Errors: make([]error, 0)},
-		cleanInterval: time.Hour,
-		scanInterval:  time.Minute,
+		cleanInterval: cleanInterval,
+		scanInterval:  scanInterval,
 	}, nil
 }
 

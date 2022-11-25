@@ -9,19 +9,18 @@ import (
 	"time"
 
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app"
-	appqueue "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/app/notification/queue"
-	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/domain/event"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config"
-	configviper "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/config/viper"
 	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/environment/notification/queue/rabbitmq"
-	memorystorage "github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/ekhvalov/golang-otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 )
 
 var (
-	configFile   string
-	schedulerCmd = &cobra.Command{
+	configFile    string
+	scanInterval  time.Duration
+	cleanInterval time.Duration
+	schedulerCmd  = &cobra.Command{
 		Use: "scheduler",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run()
@@ -36,21 +35,24 @@ const (
 
 func init() {
 	schedulerCmd.PersistentFlags().StringVar(&configFile, "config", "", "Path to config file")
+	schedulerCmd.PersistentFlags().
+		DurationVar(&scanInterval, "scan_interval", time.Minute, "Scan for new notifications loop interval")
+	schedulerCmd.PersistentFlags().
+		DurationVar(&cleanInterval, "clean_interval", time.Hour, "Clean of old events loop interval")
 }
 
 func run() error {
-	fmt.Println("Using config file:", configFile)
-	configProvider, err := configviper.NewProvider(configFile, configEnvPrefix, configviper.DefaultEnvKeyReplacer)
+	v, err := config.CreateViper(configFile, configEnvPrefix, config.DefaultEnvKeyReplacer)
 	if err != nil {
-		return fmt.Errorf("create config error: %w", err)
+		return fmt.Errorf("create viper error: %w", err)
 	}
-	queueProducer, err := createQueueProducer(configProvider)
+	queueProducer := rabbitmq.NewProducer(config.NewRabbitMQConfig(v))
+	strg, err := storage.CreateStorage(v)
 	if err != nil {
-		return err
+		return fmt.Errorf("create storage error: %w", err)
 	}
-	storage := createStorage()
 
-	scheduler, err := app.NewScheduler(storage, queueProducer)
+	scheduler, err := app.NewScheduler(strg, queueProducer, cleanInterval, scanInterval)
 	if err != nil {
 		return fmt.Errorf("create scheduler error: %w", err)
 	}
@@ -81,17 +83,4 @@ func run() error {
 		err = multierror.Append(err, e)
 	}
 	return err
-}
-
-func createQueueProducer(provider config.Provider) (appqueue.Producer, error) {
-	var cfg rabbitmq.ConfigRabbitMQ
-	err := provider.UnmarshalKey("queue.rabbitmq", cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal ConfigRabbitMQ error: %w", err)
-	}
-	return rabbitmq.NewProducer(cfg), nil
-}
-
-func createStorage() event.Storage {
-	return memorystorage.New(memorystorage.UUIDProvider{})
 }
